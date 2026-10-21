@@ -50,3 +50,54 @@ jobs:
       - run: composer test
       - run: composer lint
       - run: composer analyse
+
+  runtime-floor:
+    runs-on: ubuntu-latest
+    name: Runtime / PHP 8.3 / php-parser 5.0
+    env:
+      ATLAS_RUNTIME_HOST: ${{ runner.temp }}/migration-atlas-runtime-floor
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: ctype, dom, fileinfo, filter, mbstring, openssl, tokenizer, xml, xmlwriter
+          tools: composer:v2
+          coverage: none
+
+      - name: Prepare an isolated production dependency host
+        run: |
+          php <<'PHP'
+          <?php
+          $host = getenv('ATLAS_RUNTIME_HOST');
+          mkdir($host, 0777, true);
+          file_put_contents($host.'/composer.json', json_encode([
+              'name' => 'migration-atlas/runtime-floor-check',
+              'require' => [
+                  'ahmed-asban/laravel-migration-atlas' => 'dev-main',
+                  'illuminate/console' => '^12.0',
+                  'illuminate/support' => '^12.0',
+                  'nikic/php-parser' => '5.0.0',
+              ],
+              'repositories' => [[
+                  'type' => 'path',
+                  'url' => getenv('GITHUB_WORKSPACE'),
+                  'options' => [
+                      'symlink' => false,
+                      'reference' => 'none',
+                      'versions' => ['ahmed-asban/laravel-migration-atlas' => 'dev-main'],
+                  ],
+              ]],
+              'config' => ['allow-plugins' => false],
+          ], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+          PHP
+
+      - name: Install the declared parser floor without development dependencies
+        run: composer update --working-dir="$ATLAS_RUNTIME_HOST" --no-dev --prefer-dist --no-interaction --no-progress
+
+      - name: Verify production parsing without migration execution
+        run: php tests/Runtime/parser-smoke.php "$ATLAS_RUNTIME_HOST/vendor/autoload.php"

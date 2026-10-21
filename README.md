@@ -4,10 +4,11 @@ Laravel Migration Atlas is a Composer package for reconstructing expected schema
 migration history, and column lineage through static analysis of migration source.
 The planned analyzer will never execute migrations or connect to a database.
 
-**Status: M1 migration discovery implemented. The analyzer is not implemented yet.**
-Package integration and deterministic migration discovery are available. AST
-parsing, reconstruction, and result rendering are future milestones. This
-repository is not yet a functional schema inspection tool or a published release.
+**Status: migration discovery and static AST parsing implemented.**
+Package integration, deterministic discovery, and a guarded parser API are
+available. Schema operation normalization, reconstruction, and result rendering
+remain unimplemented. This repository is not yet a functional schema inspection
+tool or a published package release.
 
 ## Requirements
 
@@ -55,6 +56,10 @@ Invalid/unreadable discovery directories also exit 1 with an explanatory error.
 `--json` does not yet produce the future JSON contract; `--connection` and
 `--strict` do not yet perform schema analysis.
 
+The commands deliberately retain their discovery-only behavior. The new parser
+is available through the `MigrationAtlas\Parsing\MigrationParser` container
+binding; it is not yet connected to a complete command analysis pipeline.
+
 ## Migration discovery
 
 - Configured `paths` are scanned in their configured order. Repeatable `--path`
@@ -74,13 +79,53 @@ Invalid/unreadable discovery directories also exit 1 with an explanatory error.
 - An empty input set returns an empty migration list. A failed directory scan
   throws `DiscoveryFailed`; it never silently becomes an empty or partial list.
 - Source contents are never read or executed by discovery. Discovered entries
-  remain in the list if a source disappears before the future parsing stage.
+  remain in the list if a source disappears before parsing.
 
 The container resolves `MigrationAtlas\Discovery\MigrationFinder` to
 `FilesystemMigrationFinder`. Its `find(DiscoveryOptions)` method returns an
 immutable `MigrationList` of `MigrationFile` values and structured diagnostics.
 Automatic discovery of third-party providers' migration paths remains outside
 MVP scope; add those directories to the configuration explicitly.
+
+## Static parsing
+
+`MigrationParser::parse(MigrationFile)` returns an immutable `ParsedMigration`
+containing the original file/ordinal, raw calls, migration connection context,
+conditional flag, diagnostics, and an explicit `parsed` flag.
+
+- Source is opened read-only as bytes. The native reader rejects nonregular
+  files, checks file metadata, and bounds reads to `max_file_size + 1` bytes.
+  The configured size limit defaults to 1 MiB and must be a positive integer
+  below `PHP_INT_MAX`. This is not a CPU-timeout or fatal-memory-recovery promise.
+- php-parser v5 builds an AST; import and class names resolve without loading
+  migration classes, parents, traits, or application configuration. Named and
+  directly returned anonymous migrations are supported. `down()` schema effects
+  and connection writes are excluded from forward analysis.
+- Schema calls, explicit connection wrappers, SQL-executing calls, closure/arrow
+  Blueprint callbacks, and fluent method chains retain source text and lines.
+  Blueprint binding follows the actual callback parameter, including aliases.
+- Static literals and resolved `X::class` values are captured; dynamic
+  expressions remain `Unresolvable` values. No functions, constructors,
+  predicates, migration methods, or source code are executed.
+- Literal migration connections and explicit wrappers retain their distinct
+  context. Dynamic routing, property mutations, instance escapes/aliases, custom
+  inheritance, traits, and `getConnection()` overrides never fabricate a default
+  partition.
+- `shouldRun()` is detected by presence only and emits `SHOULD_RUN_DETECTED`.
+  Control flow, callback aborts, opaque side effects, unsupported call chains,
+  and uncertain Blueprint bindings remain visibly unresolved in the raw model.
+- Size/read/stat/syntax/parser failures retain the original file and ordinal,
+  return `parsed=false`, and carry one root warning with no partial calls.
+  Missing or ambiguous migration classes and missing/uninspectable `up()` bodies
+  also fail conservatively. A verified empty `up()` is a successful no-op.
+
+These are structural parser results, not reconstructed tables or replayable
+schema operations. The later normalization layer must translate failures into
+ordered unknown-effects markers and apply uncertainty semantics.
+
+Raw values preserve PHP string/source bytes. Ordinary UTF-8 payloads can be
+JSON-encoded directly; binary strings require an explicit encoding policy in
+the future renderer. The parser does not silently replace or transcode bytes.
 
 ## Development
 
@@ -90,6 +135,7 @@ composer validate --strict
 composer test
 composer lint
 composer analyse
+php tests/Runtime/parser-smoke.php
 ```
 
 `composer check` runs validation, tests, formatting checks, and static analysis.
@@ -114,10 +160,15 @@ plugin is enabled for checks against database and code-execution dependencies.
 GitHub Actions resolves lowest and highest compatible dependencies for all four
 PHP/Laravel combinations (eight jobs); Composer's security blocking stays enabled.
 Passing CI status must be checked on GitHub; the workflow alone does not establish it.
+An additional production-only CI job pins `nikic/php-parser` to **5.0.0** without
+development dependencies. The development matrix alone cannot test that floor:
+its PHPUnit dependency requires a newer parser. The standalone smoke check covers
+imports, connection routing, fluent/arrow callbacks, source locations, size and
+syntax failures, and migration non-execution.
 
 Current implementation, verification results, and limitations are recorded in
-[the M1 handoff](M1-HANDOFF.md). The [M0 verification handoff](M0-HANDOFF.md)
-preserves the earlier scaffolding checkpoint.
+[the M2 handoff](M2-HANDOFF.md). The [M1 handoff](M1-HANDOFF.md) and
+[M0 verification handoff](M0-HANDOFF.md) preserve the earlier checkpoints.
 
 ## Design and scope
 
@@ -125,8 +176,9 @@ The approved design lives in [the MVP specification](docs/mvp-spec.md),
 [architecture](docs/architecture.md), and [implementation plan](docs/implementation-plan.md).
 The specification documents preserve the approved design baseline and may still
 contain their original pre-implementation approval wording. Current progress is
-recorded in this README and the milestone handoffs. M1 supplies discovery only;
-M2 (AST parsing) and later milestones require separate review and authorization.
+recorded in this README and the milestone handoffs. M2 supplies parsing
+foundations; normalization (M3/M4), reconstruction, history/trace, and complete
+CLI rendering require subsequent review and implementation.
 
 ## License
 

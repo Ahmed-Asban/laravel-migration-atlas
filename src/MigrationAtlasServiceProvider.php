@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MigrationAtlas;
 
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 use MigrationAtlas\Cli\SchemaHistoryCommand;
 use MigrationAtlas\Cli\SchemaInspectCommand;
 use MigrationAtlas\Cli\SchemaTraceCommand;
@@ -12,6 +13,10 @@ use MigrationAtlas\Discovery\FilesystemMigrationFinder;
 use MigrationAtlas\Discovery\MigrationDirectoryReader;
 use MigrationAtlas\Discovery\MigrationFinder;
 use MigrationAtlas\Discovery\NativeMigrationDirectoryReader;
+use MigrationAtlas\Parsing\MigrationParser;
+use MigrationAtlas\Parsing\MigrationSourceReader;
+use MigrationAtlas\Parsing\NativeMigrationSourceReader;
+use MigrationAtlas\Parsing\PhpParserMigrationParser;
 
 final class MigrationAtlasServiceProvider extends ServiceProvider
 {
@@ -21,6 +26,16 @@ final class MigrationAtlasServiceProvider extends ServiceProvider
 
         $this->app->bind(MigrationDirectoryReader::class, NativeMigrationDirectoryReader::class);
         $this->app->bind(MigrationFinder::class, FilesystemMigrationFinder::class);
+        $this->app->bind(MigrationSourceReader::class, NativeMigrationSourceReader::class);
+        $this->app->bind(MigrationParser::class, function (): MigrationParser {
+            $maxFileSize = config('migration-atlas.max_file_size');
+
+            if (! is_int($maxFileSize)) {
+                throw new InvalidArgumentException('The maximum migration file size must be an integer.');
+            }
+
+            return new PhpParserMigrationParser($maxFileSize, sources: $this->app->make(MigrationSourceReader::class));
+        });
     }
 
     public function boot(): void
