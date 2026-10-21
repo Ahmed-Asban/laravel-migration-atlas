@@ -1,0 +1,17 @@
+/vendor/
+/composer.lock
+/.cache/
+/.phpunit.cache/
+/.phpunit.result.cache
+/.phpstan.cache/
+/.pint.cache
+/.env
+/.env.*
+/.idea/
+/.vscode/
+/coverage/
+/build/
+/testbench.yaml
+/workbench/
+/.DS_Store
+/Thumbs.db
