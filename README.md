@@ -4,11 +4,12 @@ Laravel Migration Atlas is a Composer package for reconstructing expected schema
 migration history, and column lineage through static analysis of migration source.
 The planned analyzer will never execute migrations or connect to a database.
 
-**Status: migration discovery and static AST parsing implemented.**
-Package integration, deterministic discovery, and a guarded parser API are
-available. Schema operation normalization, reconstruction, and result rendering
-remain unimplemented. This repository is not yet a functional schema inspection
-tool or a published package release.
+**Status: discovery, static parsing, and basic operation normalization implemented.**
+Package integration, deterministic discovery, a guarded parser API, and typed
+table/basic-column operations are available. Index/foreign-key normalization,
+additional column types, reconstruction, and result rendering remain subsequent
+work. This repository is not yet a functional schema inspection tool or a
+published package release.
 
 ## Requirements
 
@@ -56,9 +57,10 @@ Invalid/unreadable discovery directories also exit 1 with an explanatory error.
 `--json` does not yet produce the future JSON contract; `--connection` and
 `--strict` do not yet perform schema analysis.
 
-The commands deliberately retain their discovery-only behavior. The new parser
-is available through the `MigrationAtlas\Parsing\MigrationParser` container
-binding; it is not yet connected to a complete command analysis pipeline.
+The commands retain their discovery-only behavior. The parser and normalizer are
+available through the `MigrationAtlas\Parsing\MigrationParser` and
+`MigrationAtlas\Normalization\OperationNormalizer` container bindings; they are
+not yet connected to a complete command analysis pipeline.
 
 ## Migration discovery
 
@@ -119,13 +121,57 @@ conditional flag, diagnostics, and an explicit `parsed` flag.
   Missing or ambiguous migration classes and missing/uninspectable `up()` bodies
   also fail conservatively. A verified empty `up()` is a successful no-op.
 
-These are structural parser results, not reconstructed tables or replayable
-schema operations. The later normalization layer must translate failures into
-ordered unknown-effects markers and apply uncertainty semantics.
+These are structural parser results. The normalization layer translates them
+into typed schema operations and ordered unknown-effects markers; schema replay
+and the resulting completeness/existence rules remain unimplemented.
 
-Raw values preserve PHP string/source bytes. Ordinary UTF-8 payloads can be
+Raw and normalized values preserve PHP string/source bytes. Ordinary UTF-8 payloads can be
 JSON-encoded directly; binary strings require an explicit encoding policy in
 the future renderer. The parser does not silently replace or transcode bytes.
+
+## Operation normalization
+
+`OperationNormalizer::normalize(ParsedMigration)` returns an immutable
+`NormalizedMigration` with the original file, ordered operations, accumulated
+diagnostics, and the explicit `parsed` flag. Normalization uses data only: it
+does not reopen source, evaluate PHP, inspect application configuration, or
+connect to a database.
+
+- Table operations: create, alter, drop/drop-if-exists, and rename.
+- Basic columns: `id`, `string`, `integer`, `boolean`, `text`, and `timestamps`.
+  `id` captures unsigned bigint, auto-increment, and primary-key intent;
+  timestamps expand into nullable `created_at` and `updated_at`. Unspecified
+  length/precision stays null rather than guessing runtime-configured defaults.
+- Modifiers: positional `nullable()`/boolean values and static literal
+  `default(...)`, with an explicit `hasDefault` distinction for `default(null)`.
+  Column drop/rename operations retain static column names.
+- Each operation has a kind, connection context, execution certainty, and
+  file/line plus stable `[migrationOrdinal, operationOrdinal]` position.
+  `shouldRun()` makes supported operations conditional without repeating its
+  parser diagnostic. Supported columns carry full fidelity.
+- `CreateTable` and `AlterTable` contain an ordered operation body. A create's
+  `columns` list is a projection of its `AddColumn` children, not another stream
+  to replay. Positions traverse parent then children in source order.
+- Dynamic routing never falls back to default. Unresolved operations distinguish
+  known-table/known-connection attribution, name-scoped unknown connections, and
+  unknown table targets; rename metadata retains known endpoints.
+- Raw SQL produces both `RAW_SQL_DETECTED` and `UNATTRIBUTABLE_OPERATION`.
+  Unknown facade macros, including `createIfNotExists`, never fabricate a table
+  target or a create operation. Unknown Blueprint methods stay table-attributed.
+- Failed parses produce exactly one whole-file marker at operation ordinal 0,
+  preserving the root warning and nullable line. A verified empty body stays a
+  successful no-op. Reconstruction will apply the stronger whole-file cap later.
+
+The `SupportMatrix` registry records the full approved construct classifications
+and whether a normalization rule is implemented at this checkpoint. Advanced
+columns, indexes, foreign keys, `change()`, and dynamic defaults currently remain
+unresolved; the later normalizers will provide their defined full/reduced
+fidelity. An unsupported fluent chain is retained whole, so `change()` cannot
+accidentally become an ordinary column addition. Generic control flow and opaque
+callback effects preserve the parser's conservative uncertainty.
+
+The normalized DTO JSON snapshots are an internal test contract. They are not
+the final command JSON envelope or a reconstruction result.
 
 ## Development
 
@@ -136,6 +182,7 @@ composer test
 composer lint
 composer analyse
 php tests/Runtime/parser-smoke.php
+php tests/Runtime/normalization-smoke.php
 ```
 
 `composer check` runs validation, tests, formatting checks, and static analysis.
@@ -162,12 +209,12 @@ PHP/Laravel combinations (eight jobs); Composer's security blocking stays enable
 Passing CI status must be checked on GitHub; the workflow alone does not establish it.
 An additional production-only CI job pins `nikic/php-parser` to **5.0.0** without
 development dependencies. The development matrix alone cannot test that floor:
-its PHPUnit dependency requires a newer parser. The standalone smoke check covers
+its PHPUnit dependency requires a newer parser. The standalone smoke checks cover
 imports, connection routing, fluent/arrow callbacks, source locations, size and
-syntax failures, and migration non-execution.
+syntax failures, typed normalization, skip markers, and migration non-execution.
 
 Current implementation, verification results, and limitations are recorded in
-[the M2 handoff](M2-HANDOFF.md). The [M1 handoff](M1-HANDOFF.md) and
+[the M3 handoff](M3-HANDOFF.md). The [M2 handoff](M2-HANDOFF.md), [M1 handoff](M1-HANDOFF.md), and
 [M0 verification handoff](M0-HANDOFF.md) preserve the earlier checkpoints.
 
 ## Design and scope
@@ -176,9 +223,9 @@ The approved design lives in [the MVP specification](docs/mvp-spec.md),
 [architecture](docs/architecture.md), and [implementation plan](docs/implementation-plan.md).
 The specification documents preserve the approved design baseline and may still
 contain their original pre-implementation approval wording. Current progress is
-recorded in this README and the milestone handoffs. M2 supplies parsing
-foundations; normalization (M3/M4), reconstruction, history/trace, and complete
-CLI rendering require subsequent review and implementation.
+recorded in this README and the milestone handoffs. M3 supplies table and basic
+column normalization; advanced normalization (M4), reconstruction, history/trace,
+and complete CLI rendering require subsequent review and implementation.
 
 ## License
 

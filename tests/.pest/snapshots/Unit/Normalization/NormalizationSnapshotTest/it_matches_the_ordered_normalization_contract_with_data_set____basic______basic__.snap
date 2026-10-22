@@ -1,0 +1,517 @@
+{
+    "file": {
+        "absolutePath": "/fixtures/2026_10_22_000000_example.php",
+        "name": "2026_10_22_000000_example",
+        "date": "2026-10-22 00:00:00",
+        "ordinal": 7
+    },
+    "operations": [
+        {
+            "source": {
+                "position": [
+                    7,
+                    1
+                ],
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "migration": "2026_10_22_000000_example",
+                "line": 12
+            },
+            "execution": "always",
+            "kind": "create_table",
+            "table": "users",
+            "connection": "tenant",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "bigint",
+                    "source": {
+                        "position": [
+                            7,
+                            2
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 13
+                    },
+                    "nullable": false,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "unsigned": true,
+                        "autoIncrement": true,
+                        "primary": true
+                    },
+                    "fidelity": "full"
+                },
+                {
+                    "name": "name",
+                    "type": "string",
+                    "source": {
+                        "position": [
+                            7,
+                            3
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 14
+                    },
+                    "nullable": true,
+                    "hasDefault": true,
+                    "default": "guest",
+                    "attributes": {
+                        "length": 80
+                    },
+                    "fidelity": "full"
+                },
+                {
+                    "name": "rank",
+                    "type": "integer",
+                    "source": {
+                        "position": [
+                            7,
+                            4
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 15
+                    },
+                    "nullable": false,
+                    "hasDefault": true,
+                    "default": -2,
+                    "attributes": {
+                        "autoIncrement": false,
+                        "unsigned": false
+                    },
+                    "fidelity": "full"
+                },
+                {
+                    "name": "active",
+                    "type": "boolean",
+                    "source": {
+                        "position": [
+                            7,
+                            5
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 16
+                    },
+                    "nullable": false,
+                    "hasDefault": true,
+                    "default": false,
+                    "attributes": [],
+                    "fidelity": "full"
+                },
+                {
+                    "name": "bio",
+                    "type": "text",
+                    "source": {
+                        "position": [
+                            7,
+                            6
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 17
+                    },
+                    "nullable": false,
+                    "hasDefault": true,
+                    "default": null,
+                    "attributes": [],
+                    "fidelity": "full"
+                },
+                {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "source": {
+                        "position": [
+                            7,
+                            7
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 18
+                    },
+                    "nullable": true,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "precision": 3
+                    },
+                    "fidelity": "full"
+                },
+                {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "source": {
+                        "position": [
+                            7,
+                            8
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 18
+                    },
+                    "nullable": true,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "precision": 3
+                    },
+                    "fidelity": "full"
+                }
+            ],
+            "operations": [
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            2
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 13
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "users",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "id",
+                        "type": "bigint",
+                        "source": {
+                            "position": [
+                                7,
+                                2
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 13
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "unsigned": true,
+                            "autoIncrement": true,
+                            "primary": true
+                        },
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            3
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 14
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "users",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "name",
+                        "type": "string",
+                        "source": {
+                            "position": [
+                                7,
+                                3
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 14
+                        },
+                        "nullable": true,
+                        "hasDefault": true,
+                        "default": "guest",
+                        "attributes": {
+                            "length": 80
+                        },
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            4
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 15
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "users",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "rank",
+                        "type": "integer",
+                        "source": {
+                            "position": [
+                                7,
+                                4
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 15
+                        },
+                        "nullable": false,
+                        "hasDefault": true,
+                        "default": -2,
+                        "attributes": {
+                            "autoIncrement": false,
+                            "unsigned": false
+                        },
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            5
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 16
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "users",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "active",
+                        "type": "boolean",
+                        "source": {
+                            "position": [
+                                7,
+                                5
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 16
+                        },
+                        "nullable": false,
+                        "hasDefault": true,
+                        "default": false,
+                        "attributes": [],
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            6
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 17
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "users",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "bio",
+                        "type": "text",
+                        "source": {
+                            "position": [
+                                7,
+                                6
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 17
+                        },
+                        "nullable": false,
+                        "hasDefault": true,
+                        "default": null,
+                        "attributes": [],
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            7
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 18
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "users",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "created_at",
+                        "type": "timestamp",
+                        "source": {
+                            "position": [
+                                7,
+                                7
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 18
+                        },
+                        "nullable": true,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "precision": 3
+                        },
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            8
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 18
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "users",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "updated_at",
+                        "type": "timestamp",
+                        "source": {
+                            "position": [
+                                7,
+                                8
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 18
+                        },
+                        "nullable": true,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "precision": 3
+                        },
+                        "fidelity": "full"
+                    }
+                }
+            ]
+        },
+        {
+            "source": {
+                "position": [
+                    7,
+                    9
+                ],
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "migration": "2026_10_22_000000_example",
+                "line": 20
+            },
+            "execution": "always",
+            "kind": "alter_table",
+            "table": "users",
+            "connection": "tenant",
+            "operations": [
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            10
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 21
+                    },
+                    "execution": "always",
+                    "kind": "drop_column",
+                    "table": "users",
+                    "connection": "tenant",
+                    "columns": [
+                        "old",
+                        "unused"
+                    ]
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            11
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 22
+                    },
+                    "execution": "always",
+                    "kind": "rename_column",
+                    "table": "users",
+                    "connection": "tenant",
+                    "from": "name",
+                    "to": "full_name"
+                }
+            ]
+        },
+        {
+            "source": {
+                "position": [
+                    7,
+                    12
+                ],
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "migration": "2026_10_22_000000_example",
+                "line": 24
+            },
+            "execution": "always",
+            "kind": "rename_table",
+            "from": "users",
+            "to": "members",
+            "connection": "tenant"
+        },
+        {
+            "source": {
+                "position": [
+                    7,
+                    13
+                ],
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "migration": "2026_10_22_000000_example",
+                "line": 25
+            },
+            "execution": "always",
+            "kind": "drop_table",
+            "table": "users",
+            "connection": "archive",
+            "ifExists": true
+        },
+        {
+            "source": {
+                "position": [
+                    7,
+                    14
+                ],
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "migration": "2026_10_22_000000_example",
+                "line": 26
+            },
+            "execution": "always",
+            "kind": "drop_table",
+            "table": "members",
+            "connection": "tenant",
+            "ifExists": false
+        }
+    ],
+    "diagnostics": {
+        "items": []
+    },
+    "parsed": true
+}

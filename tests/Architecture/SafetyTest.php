@@ -28,3 +28,24 @@ arch('package code cannot execute migration source or shell commands')
         'proc_open',
         'popen',
     ])->ignoring('MigrationAtlas\Tests');
+
+arch('normalization operates on data without parsing or reading source')
+    ->expect('MigrationAtlas\Normalization')
+    ->not->toUse([
+        'PhpParser',
+        'MigrationAtlas\Parsing\PhpParserMigrationParser',
+        'MigrationAtlas\Parsing\MigrationSourceReader',
+        'file_get_contents',
+        'fopen',
+        'scandir',
+    ]);
+
+arch('schema operations do not depend on framework or pipeline services')
+    ->expect('MigrationAtlas\Operations')
+    ->not->toUse([
+        'Illuminate',
+        'PhpParser',
+        'MigrationAtlas\Normalization',
+        'MigrationAtlas\Parsing',
+        'MigrationAtlas\Discovery',
+    ]);

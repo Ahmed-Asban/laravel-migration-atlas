@@ -1,0 +1,284 @@
+{
+    "file": {
+        "absolutePath": "/fixtures/2026_10_22_000000_example.php",
+        "name": "2026_10_22_000000_example",
+        "date": "2026-10-22 00:00:00",
+        "ordinal": 7
+    },
+    "operations": [
+        {
+            "source": {
+                "position": [
+                    7,
+                    1
+                ],
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "migration": "2026_10_22_000000_example",
+                "line": 19
+            },
+            "execution": "conditional",
+            "kind": "create_table",
+            "table": "users",
+            "connection": "default",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "bigint",
+                    "source": {
+                        "position": [
+                            7,
+                            2
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 20
+                    },
+                    "nullable": false,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "unsigned": true,
+                        "autoIncrement": true,
+                        "primary": true
+                    },
+                    "fidelity": "full"
+                }
+            ],
+            "operations": [
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            2
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 20
+                    },
+                    "execution": "conditional",
+                    "kind": "add_column",
+                    "table": "users",
+                    "connection": "default",
+                    "column": {
+                        "name": "id",
+                        "type": "bigint",
+                        "source": {
+                            "position": [
+                                7,
+                                2
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 20
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "unsigned": true,
+                            "autoIncrement": true,
+                            "primary": true
+                        },
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            3
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 21
+                    },
+                    "execution": "conditional",
+                    "kind": "unresolved",
+                    "attribution": "attributed",
+                    "table": "users",
+                    "connection": "default",
+                    "reason": "UNRESOLVED_UNKNOWN_METHOD",
+                    "rawDescription": "$bp->uuid('token')",
+                    "wholeFileUnknown": false,
+                    "relatedTables": [],
+                    "cause": "UNRESOLVED_UNKNOWN_METHOD"
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            4
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 22
+                    },
+                    "execution": "conditional",
+                    "kind": "unresolved",
+                    "attribution": "attributed",
+                    "table": "users",
+                    "connection": "default",
+                    "reason": "UNRESOLVED_DYNAMIC_EXPRESSION",
+                    "rawDescription": "$bp->text('value')->default(now())",
+                    "wholeFileUnknown": false,
+                    "relatedTables": [],
+                    "cause": "UNRESOLVED_DYNAMIC_EXPRESSION"
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            5
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 24
+                    },
+                    "execution": "conditional",
+                    "kind": "unresolved",
+                    "attribution": "attributed",
+                    "table": "users",
+                    "connection": "default",
+                    "reason": "UNRESOLVED_CONDITIONAL_REGION",
+                    "rawDescription": "$bp->dropColumn('old')",
+                    "wholeFileUnknown": false,
+                    "relatedTables": [],
+                    "cause": "UNRESOLVED_CONDITIONAL_REGION"
+                }
+            ]
+        },
+        {
+            "source": {
+                "position": [
+                    7,
+                    6
+                ],
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "migration": "2026_10_22_000000_example",
+                "line": 27
+            },
+            "execution": "conditional",
+            "kind": "unresolved",
+            "attribution": "name_scoped",
+            "table": "users",
+            "connection": null,
+            "reason": "UNATTRIBUTABLE_OPERATION",
+            "rawDescription": "Schema::connection($connection)->rename('users', 'members')",
+            "wholeFileUnknown": false,
+            "relatedTables": [
+                "members"
+            ],
+            "cause": "UNATTRIBUTABLE_OPERATION"
+        },
+        {
+            "source": {
+                "position": [
+                    7,
+                    7
+                ],
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "migration": "2026_10_22_000000_example",
+                "line": 28
+            },
+            "execution": "conditional",
+            "kind": "unresolved",
+            "attribution": "unattributable",
+            "table": null,
+            "connection": "default",
+            "reason": "UNATTRIBUTABLE_OPERATION",
+            "rawDescription": "Schema::createIfNotExists('other', fn ($bp) => $bp->id())",
+            "wholeFileUnknown": false,
+            "relatedTables": [],
+            "cause": "UNRESOLVED_UNKNOWN_METHOD"
+        },
+        {
+            "source": {
+                "position": [
+                    7,
+                    8
+                ],
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "migration": "2026_10_22_000000_example",
+                "line": 29
+            },
+            "execution": "conditional",
+            "kind": "unresolved",
+            "attribution": "unattributable",
+            "table": null,
+            "connection": "default",
+            "reason": "UNATTRIBUTABLE_OPERATION",
+            "rawDescription": "DB::unprepared('DROP TABLE arbitrary')",
+            "wholeFileUnknown": false,
+            "relatedTables": [],
+            "cause": "RAW_SQL_DETECTED"
+        }
+    ],
+    "diagnostics": {
+        "items": [
+            {
+                "code": "SHOULD_RUN_DETECTED",
+                "severity": "warning",
+                "message": "The migration defines shouldRun(); its schema effects are conditional.",
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "line": 12
+            },
+            {
+                "code": "UNRESOLVED_UNKNOWN_METHOD",
+                "severity": "warning",
+                "message": "This method or call chain has no implemented normalization rule.",
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "line": 21
+            },
+            {
+                "code": "UNRESOLVED_DYNAMIC_EXPRESSION",
+                "severity": "warning",
+                "message": "The arguments or callback cannot be resolved statically.",
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "line": 22
+            },
+            {
+                "code": "UNRESOLVED_CONDITIONAL_REGION",
+                "severity": "warning",
+                "message": "Schema effects in this region cannot be normalized as certain operations.",
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "line": 24
+            },
+            {
+                "code": "UNATTRIBUTABLE_OPERATION",
+                "severity": "warning",
+                "message": "The table or connection target cannot be determined statically.",
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "line": 27
+            },
+            {
+                "code": "UNRESOLVED_UNKNOWN_METHOD",
+                "severity": "warning",
+                "message": "This method or call chain has no implemented normalization rule.",
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "line": 28
+            },
+            {
+                "code": "UNATTRIBUTABLE_OPERATION",
+                "severity": "warning",
+                "message": "The table or connection target cannot be determined statically.",
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "line": 28
+            },
+            {
+                "code": "RAW_SQL_DETECTED",
+                "severity": "warning",
+                "message": "Raw SQL is detected but is not interpreted.",
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "line": 29
+            },
+            {
+                "code": "UNATTRIBUTABLE_OPERATION",
+                "severity": "warning",
+                "message": "The table or connection target cannot be determined statically.",
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "line": 29
+            }
+        ]
+    },
+    "parsed": true
+}

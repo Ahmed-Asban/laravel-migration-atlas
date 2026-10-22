@@ -100,4 +100,6 @@ jobs:
         run: composer update --working-dir="$ATLAS_RUNTIME_HOST" --no-dev --prefer-dist --no-interaction --no-progress
 
       - name: Verify production parsing without migration execution
-        run: php tests/Runtime/parser-smoke.php "$ATLAS_RUNTIME_HOST/vendor/autoload.php"
+        run: |
+          php tests/Runtime/parser-smoke.php "$ATLAS_RUNTIME_HOST/vendor/autoload.php"
+          php tests/Runtime/normalization-smoke.php "$ATLAS_RUNTIME_HOST/vendor/autoload.php"

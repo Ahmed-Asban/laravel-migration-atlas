@@ -14,4 +14,9 @@ enum DiagnosticCode: string
     case MigrationClassNotFound = 'MIGRATION_CLASS_NOT_FOUND';
     case UpMethodMissing = 'UP_METHOD_MISSING';
     case ShouldRunDetected = 'SHOULD_RUN_DETECTED';
+    case UnresolvedDynamicExpression = 'UNRESOLVED_DYNAMIC_EXPRESSION';
+    case UnattributableOperation = 'UNATTRIBUTABLE_OPERATION';
+    case UnresolvedConditionalRegion = 'UNRESOLVED_CONDITIONAL_REGION';
+    case UnresolvedUnknownMethod = 'UNRESOLVED_UNKNOWN_METHOD';
+    case RawSqlDetected = 'RAW_SQL_DETECTED';
 }
