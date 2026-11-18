@@ -4,13 +4,13 @@ Laravel Migration Atlas is a Composer package for reconstructing expected schema
 migration history, and column lineage through static analysis of migration source.
 The planned analyzer will never execute migrations or connect to a database.
 
-**Status: the analyzer is implemented.** Discovery, static parsing, operation
-normalization, schema reconstruction, history/trace resolution, and the CLI
-renderers are complete: `schema:inspect`, `schema:history`, and
-`schema:trace` now render real analysis results in text or deterministic
-JSON with exit codes 0/1/2. Remaining before the acceptance sweep: guard
-clauses, schema-dump honesty, and the diagnostic-catalog conformance suite
-(M8). This repository is not yet a published package release.
+**Status: the analyzer is complete (MVP).** Discovery, static parsing,
+operation normalization, schema reconstruction, history/trace resolution,
+the CLI renderers, guard-clause recognition, and schema-dump honesty are
+all implemented and acceptance-tested. `schema:inspect`, `schema:history`,
+and `schema:trace` render real analysis results in text or deterministic
+JSON with exit codes 0/1/2. The package has not yet been tagged or
+published to Packagist.
 
 ## Requirements
 
@@ -296,6 +296,50 @@ counters, and diagnostics with a null data payload, never fabricating one.
   errors.
 - An empty discovery is `NO_MIGRATIONS_FOUND`; a run where every file was
   skipped still resolves target lookups as caveated `TABLE_NOT_FOUND`.
+- The exact guard shape `if (Schema::hasTable('<literal>')) { return; }` is
+  semantically ignored — on a fresh replay the guarded table does not exist
+  yet. Every deviation (dynamic names, negation, extra statements, else
+  branches, valued returns) stays conservatively unresolved.
+- A schema dump (`database/schema/<connection>-schema.sql`) is detected per
+  connection: `SCHEMA_DUMP_DETECTED` warns on every result for that
+  partition, `TABLE_NOT_FOUND` carries the dump caveat, and surviving
+  alters of dump-era tables surface as unknown-origin phantoms. Dump
+  contents are never read or parsed.
+
+## Support matrix
+
+The approved classifications, all implemented at their stamped fidelity:
+
+| Construct | Class | Fidelity |
+|---|---|---|
+| `Schema::create/table/drop/dropIfExists/rename`, literal `connection` wrappers, migration `$connection` | SUPPORTED | full |
+| Guard clause (exact shape) | SUPPORTED | full |
+| `id/string/integer/boolean/text/timestamps`, `nullable`, literal `default`, `dropColumn`, `renameColumn` | SUPPORTED | full |
+| Index methods (`primary/unique/index/fullText/spatialIndex` + drops), `foreign()` chains, the cascade/restrict/null family, `dropForeign`, `foreignId()->constrained()` | SUPPORTED | full |
+| Tier-1.5: partial modifiers, dynamic defaults, `change()` | PARTIAL | reduced |
+| Tier-2: generic columns, increments, `foreignIdFor`, expansions (`softDeletes`, `rememberToken`, `timestampsTz`) | PARTIAL | reduced |
+| `createIfNotExists` and custom facade macros | DEFERRED | unresolved |
+| Generated columns (`storedAs/virtualAs/generatedAs`) | DEFERRED | unresolved |
+| Raw SQL, dynamic table/connection names, arbitrary control flow | DEFERRED | unresolved |
+| `down()` methods | not analyzed | — |
+
+Anything unlisted is treated as unknown and stays visibly unresolved. The
+registry is a contract: extending it is a deliberate, reviewed act.
+
+## Limitations
+
+- **Expected, not actual.** Atlas reports what migration source implies,
+  in filename order — never what a real database contains. Re-dated
+  migrations or manual edits can diverge from the reconstruction.
+- **Global uncertainty is sticky.** One unresolved operation marks every
+  table live at that point incomplete; one skipped file caps the whole
+  run. The output always says why.
+- **Fidelity ≠ completeness.** Reduced fidelity (`†`) means a construct
+  was captured generically; it never affects exit codes.
+- **Dumps are opaque.** Squashed history is detected and caveated, never
+  parsed.
+- **Connections are partitions.** `--connection` selects a partition; it
+  never re-routes source. Table prefixes are ignored.
 
 ## Development
 
@@ -338,8 +382,9 @@ imports, connection routing, fluent/arrow callbacks, source locations, size and
 syntax failures, typed normalization, skip markers, and migration non-execution.
 
 Current implementation, verification results, and limitations are recorded in
-[the M7 handoff](M7-HANDOFF.md). The [M6 handoff](M6-HANDOFF.md), [M5 handoff](M5-HANDOFF.md), [M4 handoff](M4-HANDOFF.md), [M3 handoff](M3-HANDOFF.md), [M2 handoff](M2-HANDOFF.md), [M1 handoff](M1-HANDOFF.md), and
+[the M8 handoff](M8-HANDOFF.md). The [M7 handoff](M7-HANDOFF.md), [M6 handoff](M6-HANDOFF.md), [M5 handoff](M5-HANDOFF.md), [M4 handoff](M4-HANDOFF.md), [M3 handoff](M3-HANDOFF.md), [M2 handoff](M2-HANDOFF.md), [M1 handoff](M1-HANDOFF.md), and
 [M0 verification handoff](M0-HANDOFF.md) preserve the earlier checkpoints.
+The [changelog](CHANGELOG.md) summarizes the release history.
 
 ## Design and scope
 
@@ -347,10 +392,12 @@ The approved design lives in [the MVP specification](docs/mvp-spec.md),
 [architecture](docs/architecture.md), and [implementation plan](docs/implementation-plan.md).
 The specification documents preserve the approved design baseline and may still
 contain their original pre-implementation approval wording. Current progress is
-recorded in this README and the milestone handoffs. M7 supplies the working
-CLI with both renderers and the exit-code contract; guard clauses, schema-dump
-honesty, and the diagnostic-catalog conformance suite remain for the final
-hardening milestone.
+recorded in this README and the milestone handoffs. Phase 1 (M0–M8) is
+complete: every acceptance criterion has a passing scenario, the diagnostic
+catalog is executable documentation, and the security constraints are
+enforced by architecture tests. The post-MVP direction (specification §10)
+remains non-binding: `--from-database` cross-checks, recursive scanning,
+Tier promotions, and publication tooling.
 
 ## License
 

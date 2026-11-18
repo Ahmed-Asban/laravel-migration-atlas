@@ -47,6 +47,14 @@ final class SchemaCallExtractor
             return;
         }
 
+        // D13: the exact idempotency guard shape is semantically ignorable —
+        // on a fresh replay the guarded table does not exist yet, so the
+        // body after the guard runs normally. Every deviation from the
+        // narrow shape falls back to the unresolved conservative path.
+        if ($node instanceof Stmt\If_ && $this->isGuardClause($node)) {
+            return;
+        }
+
         $region = $region || $this->afterExit || $this->isUnresolvedRegion($node);
 
         if ($node instanceof CallLike) {
@@ -350,5 +358,35 @@ final class SchemaCallExtractor
             || $node instanceof Expr\BinaryOp\BooleanAnd || $node instanceof Expr\BinaryOp\BooleanOr
             || $node instanceof Expr\BinaryOp\LogicalAnd || $node instanceof Expr\BinaryOp\LogicalOr
             || $node instanceof Expr\BinaryOp\Coalesce || $node instanceof Expr\NullsafeMethodCall;
+    }
+
+    /**
+     * The exact approved guard shape: `if (Schema::hasTable('<literal>')) { return; }`
+     * with no else branches, no additional statements, and a void return.
+     */
+    private function isGuardClause(Stmt\If_ $node): bool
+    {
+        if (count($node->stmts) !== 1 || ! $node->stmts[0] instanceof Stmt\Return_
+            || $node->stmts[0]->expr !== null || $node->else !== null || $node->elseifs !== []) {
+            return false;
+        }
+
+        $condition = $node->cond;
+
+        if (! $condition instanceof Expr\StaticCall || ! $condition->class instanceof Name
+            || ! $condition->name instanceof Identifier || strcasecmp($condition->name->toString(), 'hasTable') !== 0
+            || ! $this->isFacade($condition->class, 'Schema')) {
+            return false;
+        }
+
+        $arguments = $condition->getRawArgs();
+
+        if (count($arguments) !== 1 || ! $arguments[0] instanceof Arg) {
+            return false;
+        }
+
+        $table = $this->evaluator->evaluate($arguments[0]->value);
+
+        return is_string($table) && $table !== '';
     }
 }

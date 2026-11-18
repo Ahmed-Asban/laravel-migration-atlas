@@ -29,7 +29,7 @@ it('distinguishes the approved support contract from the currently implemented s
 })->with([
     ['schema', 'create', SupportLevel::Supported, Fidelity::Full, true],
     ['schema', 'createIfNotExists', SupportLevel::Deferred, null, false],
-    ['schema', 'hasTable', SupportLevel::Supported, Fidelity::Full, false],
+    ['schema', 'hasTable', SupportLevel::Supported, Fidelity::Full, true],
     ['lifecycle', 'dropColumn', SupportLevel::Supported, Fidelity::Full, true],
     ['lifecycle', 'renameColumn', SupportLevel::Supported, Fidelity::Full, true],
     ['column', 'increments', SupportLevel::Partial, Fidelity::Reduced, true],

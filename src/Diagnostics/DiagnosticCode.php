@@ -31,4 +31,5 @@ enum DiagnosticCode: string
     case TableNotFound = 'TABLE_NOT_FOUND';
     case ColumnNotFound = 'COLUMN_NOT_FOUND';
     case AmbiguousTableIdentity = 'AMBIGUOUS_TABLE_IDENTITY';
+    case SchemaDumpDetected = 'SCHEMA_DUMP_DETECTED';
 }

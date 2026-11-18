@@ -11,12 +11,16 @@ final readonly class DiscoveryOptions
     /** @var list<string> */
     public array $paths;
 
+    public string $root;
+
     /** @param array<array-key, mixed> $paths */
     public function __construct(array $paths, string $basePath)
     {
         if (! self::isLocalPath($basePath) || ! self::isAbsolutePath($basePath)) {
             throw new InvalidArgumentException('The project root must be an absolute local directory path.');
         }
+
+        $this->root = rtrim($basePath, DIRECTORY_SEPARATOR === '\\' ? '/\\' : '/');
 
         $resolved = [];
 

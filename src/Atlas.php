@@ -12,6 +12,8 @@ use MigrationAtlas\Diagnostics\DiagnosticSeverity;
 use MigrationAtlas\Discovery\DiscoveryOptions;
 use MigrationAtlas\Discovery\MigrationFinder;
 use MigrationAtlas\Discovery\MigrationList;
+use MigrationAtlas\Discovery\SchemaDump;
+use MigrationAtlas\Discovery\SchemaDumpLocator;
 use MigrationAtlas\History\ColumnTraceResolver;
 use MigrationAtlas\History\TableHistory;
 use MigrationAtlas\History\TableResolution;
@@ -51,11 +53,13 @@ final class Atlas
         private readonly SchemaReconstructor $reconstructor,
         private readonly TableHistory $history = new TableHistory,
         private readonly ColumnTraceResolver $traces = new ColumnTraceResolver,
+        private readonly SchemaDumpLocator $dumps = new SchemaDumpLocator,
     ) {}
 
     public function inspect(string $table, DiscoveryOptions $options, string $connection = 'default'): InspectResult
     {
         [$list, $replay] = $this->analyze($options);
+        $dump = $this->dumps->locate($options->root)->forConnection($connection);
 
         if (count($list) === 0) {
             return new InspectResult($this->meta('schema:inspect', $table, $connection, null),
@@ -66,8 +70,8 @@ final class Atlas
 
         if ($resolution->kind === TableResolutionKind::NotFound) {
             return new InspectResult(
-                $this->meta('schema:inspect', $table, $connection, $replay, caveated: true),
-                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table, $connection)));
+                $this->meta('schema:inspect', $table, $connection, $replay, caveated: $dump !== null || $replay->ledger->entries() !== []),
+                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table, $connection, $dump), $dump));
         }
 
         if ($resolution->kind === TableResolutionKind::Ambiguous) {
@@ -99,12 +103,13 @@ final class Atlas
         );
 
         return new InspectResult($this->meta('schema:inspect', $table, $connection, $replay,
-            incomplete: $lineage->status === TableStatus::Incomplete), $data, $this->diagnostics($replay, $list));
+            incomplete: $lineage->status === TableStatus::Incomplete), $data, $this->diagnostics($replay, $list, $dump));
     }
 
     public function history(string $table, DiscoveryOptions $options, string $connection = 'default'): HistoryResult
     {
         [$list, $replay] = $this->analyze($options);
+        $dump = $this->dumps->locate($options->root)->forConnection($connection);
 
         if (count($list) === 0) {
             return new HistoryResult($this->meta('schema:history', $table, $connection, null),
@@ -115,8 +120,8 @@ final class Atlas
 
         if ($resolution->kind === TableResolutionKind::NotFound) {
             return new HistoryResult(
-                $this->meta('schema:history', $table, $connection, $replay, caveated: true),
-                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table, $connection)));
+                $this->meta('schema:history', $table, $connection, $replay, caveated: $dump !== null || $replay->ledger->entries() !== []),
+                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table, $connection, $dump), $dump));
         }
 
         if ($resolution->kind === TableResolutionKind::Ambiguous) {
@@ -155,12 +160,13 @@ final class Atlas
         );
 
         return new HistoryResult($this->meta('schema:history', $table, $connection, $replay,
-            incomplete: $primary->status === TableStatus::Incomplete), $data, $this->diagnostics($replay, $list));
+            incomplete: $primary->status === TableStatus::Incomplete), $data, $this->diagnostics($replay, $list, $dump));
     }
 
     public function trace(string $table, string $column, DiscoveryOptions $options, string $connection = 'default'): TraceResult
     {
         [$list, $replay] = $this->analyze($options);
+        $dump = $this->dumps->locate($options->root)->forConnection($connection);
 
         if (count($list) === 0) {
             return new TraceResult($this->meta('schema:trace', $table, $connection, null),
@@ -171,8 +177,8 @@ final class Atlas
 
         if ($resolution->kind === TableResolutionKind::NotFound) {
             return new TraceResult(
-                $this->meta('schema:trace', $table, $connection, $replay, caveated: true),
-                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table, $connection)));
+                $this->meta('schema:trace', $table, $connection, $replay, caveated: $dump !== null || $replay->ledger->entries() !== []),
+                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table, $connection, $dump), $dump));
         }
 
         if ($resolution->kind === TableResolutionKind::Ambiguous) {
@@ -221,7 +227,7 @@ final class Atlas
         );
 
         return new TraceResult($this->meta('schema:trace', $table, $connection, $replay,
-            incomplete: $lineage->status === TableStatus::Incomplete), $data, $this->diagnostics($replay, $list));
+            incomplete: $lineage->status === TableStatus::Incomplete), $data, $this->diagnostics($replay, $list, $dump));
     }
 
     /**
@@ -268,19 +274,21 @@ final class Atlas
         );
     }
 
-    private function diagnostics(ReconstructionResult $replay, MigrationList $list): DiagnosticCollection
+    private function diagnostics(ReconstructionResult $replay, MigrationList $list, ?SchemaDump $dump = null): DiagnosticCollection
     {
         return new DiagnosticCollection([
             ...$list->diagnostics->items,
             ...$replay->diagnostics->items,
+            ...($dump === null ? [] : [$this->schemaDump($dump)]),
         ]);
     }
 
-    private function withError(ReconstructionResult $replay, MigrationList $list, Diagnostic $error): DiagnosticCollection
+    private function withError(ReconstructionResult $replay, MigrationList $list, Diagnostic $error, ?SchemaDump $dump = null): DiagnosticCollection
     {
         return new DiagnosticCollection([
             ...$list->diagnostics->items,
             ...$replay->diagnostics->items,
+            ...($dump === null ? [] : [$this->schemaDump($dump)]),
             $error,
         ]);
     }
@@ -308,9 +316,12 @@ final class Atlas
         return $lineage->origin === Origin::CreatedHere ? $lineage->source : null;
     }
 
-    private function tableNotFound(ReconstructionResult $replay, string $table, string $connection): Diagnostic
+    private function tableNotFound(ReconstructionResult $replay, string $table, string $connection, ?SchemaDump $dump = null): Diagnostic
     {
-        if ($replay->ledger->entries() !== []) {
+        if ($dump !== null) {
+            $message = "No analyzed migration resolves '{$table}'. The table may be defined in the "
+                ."unanalyzed schema dump ({$dump->file}) rather than being absent anywhere.";
+        } elseif ($replay->ledger->entries() !== []) {
             $message = "No analyzed migration resolves '{$table}'. Unresolved operations or skipped files "
                 .'in this run could have defined or altered it, so this is not proof of absence.';
         } else {
@@ -336,6 +347,18 @@ final class Atlas
         }
 
         return new Diagnostic(DiagnosticCode::TableNotFound, DiagnosticSeverity::Error, $message, null, null);
+    }
+
+    /**
+     * §8.2 dump honesty: detection only, the dump contents are never read
+     * or interpreted.
+     */
+    private function schemaDump(SchemaDump $dump): Diagnostic
+    {
+        return new Diagnostic(DiagnosticCode::SchemaDumpDetected, DiagnosticSeverity::Warning,
+            "A schema dump exists for the '{$dump->connection}' connection ({$dump->file}). "
+            .'Migrations older than the dump may be missing; early history may be absent.',
+            null, null);
     }
 
     /**

@@ -88,7 +88,9 @@ final class OperationNormalizer
 
         if ($entry === null || ! $entry->implemented || ! in_array($entry->normalizer, ['create_table', 'alter_table', 'drop_table', 'rename_table'], true)) {
             // A macro's apparent table argument does not establish its footprint.
-            return $context->unresolved($call->line, $call->source, null, $call->connection, DiagnosticCode::UnresolvedUnknownMethod);
+            $cause = $call->unresolvedRegion ? DiagnosticCode::UnresolvedConditionalRegion : DiagnosticCode::UnresolvedUnknownMethod;
+
+            return $context->unresolved($call->line, $call->source, null, $call->connection, $cause);
         }
 
         $parameters = match ($entry->normalizer) {

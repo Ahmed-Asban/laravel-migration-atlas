@@ -29,6 +29,18 @@ arch('package code cannot execute migration source or shell commands')
         'popen',
     ])->ignoring('MigrationAtlas\Tests');
 
+arch('package code never opens network connections or writes files')
+    ->expect('MigrationAtlas')
+    ->not->toUse([
+        'curl_init',
+        'curl_exec',
+        'fsockopen',
+        'stream_socket_client',
+        'socket_create',
+        'file_get_contents',
+        'file_put_contents',
+    ])->ignoring('MigrationAtlas\Tests');
+
 arch('normalization operates on data without parsing or reading source')
     ->expect('MigrationAtlas\Normalization')
     ->not->toUse([

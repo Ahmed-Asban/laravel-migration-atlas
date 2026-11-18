@@ -60,7 +60,7 @@ final readonly class SupportMatrix
             ['schema', ['rename'], SupportLevel::Supported, null, 'rename_table', true],
             ['schema', ['connection', 'getConnection'], SupportLevel::Supported, null, 'parser_connection', true],
             ['schema', ['createIfNotExists'], SupportLevel::Deferred, null, null, false],
-            ['schema', ['hasTable'], SupportLevel::Supported, null, 'guard_clause', false],
+            ['schema', ['hasTable'], SupportLevel::Supported, null, 'guard_clause', true],
             ['column', ['id', 'string', 'integer', 'boolean', 'text', 'timestamps'], SupportLevel::Supported, 1, 'tier_one_column', true],
             ['column', ['bigIncrements', 'increments', 'integerIncrements', 'mediumIncrements', 'smallIncrements', 'tinyIncrements'], SupportLevel::Partial, 2, 'increment_column', true],
             ['column', ['bigInteger', 'unsignedInteger', 'unsignedBigInteger', 'date', 'dateTime', 'time', 'json', 'jsonb', 'decimal', 'float', 'double', 'enum', 'set', 'char', 'tinyText', 'mediumText', 'longText', 'uuid', 'ulid', 'year', 'foreignId', 'ipAddress', 'macAddress'], SupportLevel::Partial, 2, 'generic_column', true],
