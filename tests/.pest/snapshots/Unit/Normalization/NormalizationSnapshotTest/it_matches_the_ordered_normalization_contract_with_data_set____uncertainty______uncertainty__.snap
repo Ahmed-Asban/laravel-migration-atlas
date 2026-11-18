@@ -42,6 +42,42 @@
                         "primary": true
                     },
                     "fidelity": "full"
+                },
+                {
+                    "name": "token",
+                    "type": "uuid",
+                    "source": {
+                        "position": [
+                            7,
+                            3
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 21
+                    },
+                    "nullable": false,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": [],
+                    "fidelity": "reduced"
+                },
+                {
+                    "name": "value",
+                    "type": "text",
+                    "source": {
+                        "position": [
+                            7,
+                            4
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 22
+                    },
+                    "nullable": false,
+                    "hasDefault": true,
+                    "default": "[dynamic]",
+                    "attributes": [],
+                    "fidelity": "reduced"
                 }
             ],
             "operations": [
@@ -93,15 +129,27 @@
                         "line": 21
                     },
                     "execution": "conditional",
-                    "kind": "unresolved",
-                    "attribution": "attributed",
+                    "kind": "add_column",
                     "table": "users",
                     "connection": "default",
-                    "reason": "UNRESOLVED_UNKNOWN_METHOD",
-                    "rawDescription": "$bp->uuid('token')",
-                    "wholeFileUnknown": false,
-                    "relatedTables": [],
-                    "cause": "UNRESOLVED_UNKNOWN_METHOD"
+                    "column": {
+                        "name": "token",
+                        "type": "uuid",
+                        "source": {
+                            "position": [
+                                7,
+                                3
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 21
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": [],
+                        "fidelity": "reduced"
+                    }
                 },
                 {
                     "source": {
@@ -114,15 +162,27 @@
                         "line": 22
                     },
                     "execution": "conditional",
-                    "kind": "unresolved",
-                    "attribution": "attributed",
+                    "kind": "add_column",
                     "table": "users",
                     "connection": "default",
-                    "reason": "UNRESOLVED_DYNAMIC_EXPRESSION",
-                    "rawDescription": "$bp->text('value')->default(now())",
-                    "wholeFileUnknown": false,
-                    "relatedTables": [],
-                    "cause": "UNRESOLVED_DYNAMIC_EXPRESSION"
+                    "column": {
+                        "name": "value",
+                        "type": "text",
+                        "source": {
+                            "position": [
+                                7,
+                                4
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 22
+                        },
+                        "nullable": false,
+                        "hasDefault": true,
+                        "default": "[dynamic]",
+                        "attributes": [],
+                        "fidelity": "reduced"
+                    }
                 },
                 {
                     "source": {
@@ -221,20 +281,6 @@
                 "message": "The migration defines shouldRun(); its schema effects are conditional.",
                 "file": "/fixtures/2026_10_22_000000_example.php",
                 "line": 12
-            },
-            {
-                "code": "UNRESOLVED_UNKNOWN_METHOD",
-                "severity": "warning",
-                "message": "This method or call chain has no implemented normalization rule.",
-                "file": "/fixtures/2026_10_22_000000_example.php",
-                "line": 21
-            },
-            {
-                "code": "UNRESOLVED_DYNAMIC_EXPRESSION",
-                "severity": "warning",
-                "message": "The arguments or callback cannot be resolved statically.",
-                "file": "/fixtures/2026_10_22_000000_example.php",
-                "line": 22
             },
             {
                 "code": "UNRESOLVED_CONDITIONAL_REGION",

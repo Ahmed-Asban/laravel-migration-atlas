@@ -4,12 +4,13 @@ Laravel Migration Atlas is a Composer package for reconstructing expected schema
 migration history, and column lineage through static analysis of migration source.
 The planned analyzer will never execute migrations or connect to a database.
 
-**Status: discovery, static parsing, and basic operation normalization implemented.**
+**Status: discovery, static parsing, and operation normalization implemented.**
 Package integration, deterministic discovery, a guarded parser API, and typed
-table/basic-column operations are available. Index/foreign-key normalization,
-additional column types, reconstruction, and result rendering remain subsequent
-work. This repository is not yet a functional schema inspection tool or a
-published package release.
+operations are available: tables, basic columns and modifiers at full
+fidelity; Tier-2 columns, indexes, foreign keys, `change()`, and dynamic
+defaults at explicitly reduced fidelity. Reconstruction, history/trace, and
+result rendering remain subsequent work. This repository is not yet a
+functional schema inspection tool or a published package release.
 
 ## Requirements
 
@@ -161,13 +162,41 @@ connect to a database.
 - Failed parses produce exactly one whole-file marker at operation ordinal 0,
   preserving the root warning and nullable line. A verified empty body stays a
   successful no-op. Reconstruction will apply the stronger whole-file cap later.
+- Tier-2 columns are recorded with their canonical raw type and literal
+  arguments (`total`/`places`, `precision`, `length`, `allowedValues`),
+  increments carry auto-increment/unsigned/primary intent, and known
+  expansions (`softDeletes`, `softDeletesTz`, `rememberToken`, `timestampsTz`)
+  record their defined columns. Every Tier-2 element is fidelity `reduced`.
+- Partial modifiers (`unsigned`, `after`, `first`, `comment`, `charset`,
+  `collation`, `useCurrent`, `useCurrentOnUpdate`) record static data and mark
+  the column reduced. `default(now())`/`default(DB::raw(...))` record an
+  explicit `[dynamic]` marker; `useCurrent()` records `CURRENT_TIMESTAMP`.
+- `change()` captures a column-modification event carrying only the declared
+  definition; the affected column is always fidelity `reduced`.
+- Index operations normalize Laravel's exact convention naming
+  (`{table}_{columns}_{type}`, lowercased, dashes/dots to underscores) when no
+  name is given, and drops resolve literal names or conventional names from
+  column lists. `dropPrimary()` without arguments keeps a null name because
+  no static name exists.
+- Foreign-key chains (`foreign()->references()->on()->onDelete()->onUpdate()`,
+  the `cascadeOnDelete`/`restrictOnDelete`/`nullOnDelete`/`cascadeOnUpdate`
+  family, `dropForeign`) are captured at full fidelity from literals.
+  `foreignId()->constrained()` derives the convention table through
+  Laravel's pluralization and stays full fidelity;
+  `foreignIdFor(Model::class)` resolves `::class` only when statically
+  resolvable, records model conventions, and stays reduced because a model may
+  override its table or key. FK-modifier calls before a key command exists
+  (`foreignId('x')->onDelete(...)`) are visibly unresolved rather than
+  dead Fluent attributes.
 
 The `SupportMatrix` registry records the full approved construct classifications
-and whether a normalization rule is implemented at this checkpoint. Advanced
-columns, indexes, foreign keys, `change()`, and dynamic defaults currently remain
-unresolved; the later normalizers will provide their defined full/reduced
-fidelity. An unsupported fluent chain is retained whole, so `change()` cannot
-accidentally become an ordinary column addition. Generic control flow and opaque
+and whether a normalization rule is implemented at this checkpoint. Tier-2
+generic columns, increment columns, known expansions, partial modifiers,
+dynamic-default markers, indexes, foreign keys, and `change()` are now
+normalized with their defined reduced fidelity; `storedAs`/`virtualAs`/
+`generatedAs`, guard clauses, and custom macros remain deferred. An
+unsupported fluent chain is retained whole, so an unknown modifier cannot
+accidentally become a captured column effect. Generic control flow and opaque
 callback effects preserve the parser's conservative uncertainty.
 
 The normalized DTO JSON snapshots are an internal test contract. They are not
@@ -214,7 +243,7 @@ imports, connection routing, fluent/arrow callbacks, source locations, size and
 syntax failures, typed normalization, skip markers, and migration non-execution.
 
 Current implementation, verification results, and limitations are recorded in
-[the M3 handoff](M3-HANDOFF.md). The [M2 handoff](M2-HANDOFF.md), [M1 handoff](M1-HANDOFF.md), and
+[the M4 handoff](M4-HANDOFF.md). The [M3 handoff](M3-HANDOFF.md), [M2 handoff](M2-HANDOFF.md), [M1 handoff](M1-HANDOFF.md), and
 [M0 verification handoff](M0-HANDOFF.md) preserve the earlier checkpoints.
 
 ## Design and scope
@@ -223,9 +252,10 @@ The approved design lives in [the MVP specification](docs/mvp-spec.md),
 [architecture](docs/architecture.md), and [implementation plan](docs/implementation-plan.md).
 The specification documents preserve the approved design baseline and may still
 contain their original pre-implementation approval wording. Current progress is
-recorded in this README and the milestone handoffs. M3 supplies table and basic
-column normalization; advanced normalization (M4), reconstruction, history/trace,
-and complete CLI rendering require subsequent review and implementation.
+recorded in this README and the milestone handoffs. M4 supplies index,
+foreign-key, `change()`, and Tier-2 normalization; reconstruction,
+history/trace, and complete CLI rendering require subsequent review and
+implementation.
 
 ## License
 

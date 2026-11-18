@@ -6,13 +6,15 @@ namespace MigrationAtlas\Normalization;
 
 use MigrationAtlas\Diagnostics\DiagnosticCode;
 use MigrationAtlas\Operations\AddColumn;
+use MigrationAtlas\Operations\ChangeColumn;
 use MigrationAtlas\Operations\ColumnDefinitionDto;
+use MigrationAtlas\Operations\Fidelity;
 use MigrationAtlas\Operations\Operation;
 use MigrationAtlas\Parsing\RawBlueprintCall;
 
 final class TierOneColumnNormalizer
 {
-    public function __construct(private readonly SupportMatrix $matrix = new SupportMatrix) {}
+    public function __construct(private readonly ColumnModifierReducer $modifiers = new ColumnModifierReducer) {}
 
     /** @return list<Operation> */
     public function normalize(RawBlueprintCall $call, string $table, string $connection, NormalizationContext $context): array
@@ -47,35 +49,20 @@ final class TierOneColumnNormalizer
             return [$context->unresolved($root->line, $raw, $table, $connection, DiagnosticCode::UnresolvedDynamicExpression)];
         }
 
-        $nullable = $method === 'timestamps';
-        $hasDefault = false;
-        $default = null;
+        $state = new ColumnModifierState;
+        $state->nullable = $method === 'timestamps';
+
+        if ($method === 'timestamps' && $call->modifiers !== []) {
+            // Timestamps expand with their own declared nullability and accept
+            // no per-column modifiers.
+            return [$context->unresolved($call->modifiers[0]->line, $raw, $table, $connection, DiagnosticCode::UnresolvedUnknownMethod)];
+        }
 
         foreach ($call->modifiers as $modifier) {
-            $entry = $this->matrix->find('modifier', $modifier->method);
+            $unresolved = $this->modifiers->reduceModifier($modifier, $state, $table, $connection, $context, $raw);
 
-            if ($method === 'timestamps' || $entry === null || ! $entry->implemented) {
-                return [$context->unresolved($modifier->line, $raw, $table, $connection, DiagnosticCode::UnresolvedUnknownMethod)];
-            }
-
-            // Only the documented positional grammar is used for Fluent's
-            // magic attribute methods.
-            $named = array_filter($modifier->arguments, static fn ($argument): bool => $argument->name !== null);
-            $values = $named === [] ? CallArguments::bind($modifier->arguments, ['value'], $modifier->method === 'default' ? 1 : 0) : null;
-
-            if ($values === null) {
-                return [$context->unresolved($modifier->line, $raw, $table, $connection, DiagnosticCode::UnresolvedDynamicExpression)];
-            }
-
-            $value = array_key_exists('value', $values) ? $values['value'] : true;
-
-            if ($modifier->method === 'nullable' && is_bool($value)) {
-                $nullable = $value;
-            } elseif ($modifier->method === 'default' && $this->literal($value)) {
-                $hasDefault = true;
-                $default = $value;
-            } else {
-                return [$context->unresolved($modifier->line, $raw, $table, $connection, DiagnosticCode::UnresolvedDynamicExpression)];
+            if ($unresolved !== null) {
+                return [$unresolved];
             }
         }
 
@@ -86,16 +73,25 @@ final class TierOneColumnNormalizer
             'timestamps' => ['precision' => $precision],
             default => [],
         };
+        $attributes = array_merge($attributes, $state->attributes);
         $type = match ($method) {
             'id' => 'bigint',
             'timestamps' => 'timestamp',
             default => $method,
         };
+
+        if ($state->change) {
+            $source = $context->source($root->line);
+            $definition = new ColumnDefinitionDto($names[0], $type, $source, $state->nullable, $state->hasDefault, $state->default, $attributes, Fidelity::Reduced);
+
+            return [new ChangeColumn($source, $context->execution, $table, $connection, $definition)];
+        }
+
         $operations = [];
 
         foreach ($names as $column) {
             $source = $context->source($root->line);
-            $definition = new ColumnDefinitionDto($column, $type, $source, $nullable, $hasDefault, $default, $attributes);
+            $definition = new ColumnDefinitionDto($column, $type, $source, $state->nullable, $state->hasDefault, $state->default, $attributes, $state->fidelity());
             $operations[] = new AddColumn($source, $context->execution, $table, $connection, $definition);
         }
 
@@ -106,20 +102,5 @@ final class TierOneColumnNormalizer
     private function names(mixed $name): ?array
     {
         return is_string($name) && $name !== '' ? [$name] : null;
-    }
-
-    private function literal(mixed $value): bool
-    {
-        if (is_array($value)) {
-            foreach ($value as $item) {
-                if (! $this->literal($item)) {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        return $value === null || is_string($value) || is_int($value) || is_bool($value) || (is_float($value) && is_finite($value));
     }
 }

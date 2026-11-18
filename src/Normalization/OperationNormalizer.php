@@ -28,6 +28,9 @@ final class OperationNormalizer
     public function __construct(
         private readonly SupportMatrix $matrix = new SupportMatrix,
         private readonly TierOneColumnNormalizer $columns = new TierOneColumnNormalizer,
+        private readonly TierTwoColumnNormalizer $generic = new TierTwoColumnNormalizer,
+        private readonly IndexNormalizer $indexes = new IndexNormalizer,
+        private readonly ForeignKeyNormalizer $foreigns = new ForeignKeyNormalizer,
     ) {}
 
     public function normalize(ParsedMigration $migration): NormalizedMigration
@@ -167,6 +170,26 @@ final class OperationNormalizer
             return $this->columns->normalize($call, $table, $connection, $context);
         }
 
+        if (in_array($entry->normalizer, ['increment_column', 'expanded_column'], true)) {
+            return $this->generic->normalize($call, $table, $connection, $context);
+        }
+
+        if ($entry->normalizer === 'generic_column') {
+            // A foreignId() root owns the column and an optional derived key.
+            return strtolower($root->method ?? '') === 'foreignid'
+                ? $this->foreigns->normalize($call, $table, $connection, $context)
+                : $this->generic->normalize($call, $table, $connection, $context);
+        }
+
+        if ($entry->normalizer === 'model_foreign_id' || $entry->normalizer === 'foreign_key') {
+            return $this->foreigns->normalize($call, $table, $connection, $context);
+        }
+
+        if ($entry->normalizer === 'index') {
+            return $this->indexes->normalize($call, $table, $connection, $context);
+        }
+
+        // Column lifecycle calls accept no chained modifiers.
         if ($call->modifiers !== []) {
             return [$context->unresolved($call->modifiers[0]->line, $raw, $table, $connection, DiagnosticCode::UnresolvedUnknownMethod)];
         }

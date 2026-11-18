@@ -8,6 +8,7 @@ use MigrationAtlas\Discovery\MigrationFinder;
 use MigrationAtlas\Normalization\OperationNormalizer;
 use MigrationAtlas\Normalization\SupportMatrix;
 use MigrationAtlas\Operations\CreateTable;
+use MigrationAtlas\Operations\Fidelity;
 use MigrationAtlas\Operations\UnresolvedOperation;
 use MigrationAtlas\Parsing\MigrationParser;
 use MigrationAtlas\Tests\Support\DiscoveryWorkspace;
@@ -63,7 +64,9 @@ it('normalizes hostile source as data without executing any migration method', f
 
     expect($result->parsed)->toBeTrue()
         ->and($result->operations[0])->toBeInstanceOf(CreateTable::class)
-        ->and($result->operations[0]->columns)->toHaveCount(1)
+        ->and($result->operations[0]->columns)->toHaveCount(3)
+        ->and($result->operations[0]->columns[1]->fidelity)->toBe(Fidelity::Reduced)
+        ->and($result->operations[0]->columns[2]->default)->toBe('[dynamic]')
         ->and(array_filter($result->diagnostics->items, fn ($diagnostic) => $diagnostic->code === DiagnosticCode::ShouldRunDetected))->toHaveCount(1)
         ->and(isset($GLOBALS['migration_atlas_normalization_executed']))->toBeFalse();
 });

@@ -1,0 +1,923 @@
+{
+    "file": {
+        "absolutePath": "/fixtures/2026_10_22_000000_example.php",
+        "name": "2026_10_22_000000_example",
+        "date": "2026-10-22 00:00:00",
+        "ordinal": 7
+    },
+    "operations": [
+        {
+            "source": {
+                "position": [
+                    7,
+                    1
+                ],
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "migration": "2026_10_22_000000_example",
+                "line": 14
+            },
+            "execution": "always",
+            "kind": "create_table",
+            "table": "orders",
+            "connection": "tenant",
+            "columns": [
+                {
+                    "name": "id",
+                    "type": "bigint",
+                    "source": {
+                        "position": [
+                            7,
+                            2
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 15
+                    },
+                    "nullable": false,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "unsigned": true,
+                        "autoIncrement": true,
+                        "primary": true
+                    },
+                    "fidelity": "full"
+                },
+                {
+                    "name": "reference",
+                    "type": "uuid",
+                    "source": {
+                        "position": [
+                            7,
+                            3
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 16
+                    },
+                    "nullable": false,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": [],
+                    "fidelity": "reduced"
+                },
+                {
+                    "name": "amount",
+                    "type": "decimal",
+                    "source": {
+                        "position": [
+                            7,
+                            4
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 17
+                    },
+                    "nullable": false,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "total": 10,
+                        "places": 2
+                    },
+                    "fidelity": "reduced"
+                },
+                {
+                    "name": "status",
+                    "type": "enum",
+                    "source": {
+                        "position": [
+                            7,
+                            5
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 18
+                    },
+                    "nullable": false,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "allowedValues": [
+                            "draft",
+                            "ready"
+                        ]
+                    },
+                    "fidelity": "reduced"
+                },
+                {
+                    "name": "legacy_key",
+                    "type": "bigIncrements",
+                    "source": {
+                        "position": [
+                            7,
+                            6
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 19
+                    },
+                    "nullable": false,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "autoIncrement": true,
+                        "unsigned": true,
+                        "primary": true
+                    },
+                    "fidelity": "reduced"
+                },
+                {
+                    "name": "purged_at",
+                    "type": "timestamp",
+                    "source": {
+                        "position": [
+                            7,
+                            7
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 20
+                    },
+                    "nullable": true,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "precision": 3
+                    },
+                    "fidelity": "reduced"
+                },
+                {
+                    "name": "remember_token",
+                    "type": "string",
+                    "source": {
+                        "position": [
+                            7,
+                            8
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 21
+                    },
+                    "nullable": true,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "length": 100
+                    },
+                    "fidelity": "reduced"
+                },
+                {
+                    "name": "user_id",
+                    "type": "foreignId",
+                    "source": {
+                        "position": [
+                            7,
+                            9
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 22
+                    },
+                    "nullable": false,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "unsigned": true
+                    },
+                    "fidelity": "reduced"
+                },
+                {
+                    "name": "category_id",
+                    "type": "foreignIdFor",
+                    "source": {
+                        "position": [
+                            7,
+                            11
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 23
+                    },
+                    "nullable": false,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "references": "id",
+                        "table": "categories",
+                        "unsigned": true
+                    },
+                    "fidelity": "reduced"
+                },
+                {
+                    "name": "buyer_id",
+                    "type": "foreignIdFor",
+                    "source": {
+                        "position": [
+                            7,
+                            16
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 27
+                    },
+                    "nullable": false,
+                    "hasDefault": false,
+                    "default": null,
+                    "attributes": {
+                        "references": "id",
+                        "table": "users",
+                        "unsigned": true
+                    },
+                    "fidelity": "reduced"
+                }
+            ],
+            "operations": [
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            2
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 15
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "id",
+                        "type": "bigint",
+                        "source": {
+                            "position": [
+                                7,
+                                2
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 15
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "unsigned": true,
+                            "autoIncrement": true,
+                            "primary": true
+                        },
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            3
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 16
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "reference",
+                        "type": "uuid",
+                        "source": {
+                            "position": [
+                                7,
+                                3
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 16
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": [],
+                        "fidelity": "reduced"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            4
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 17
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "amount",
+                        "type": "decimal",
+                        "source": {
+                            "position": [
+                                7,
+                                4
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 17
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "total": 10,
+                            "places": 2
+                        },
+                        "fidelity": "reduced"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            5
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 18
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "status",
+                        "type": "enum",
+                        "source": {
+                            "position": [
+                                7,
+                                5
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 18
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "allowedValues": [
+                                "draft",
+                                "ready"
+                            ]
+                        },
+                        "fidelity": "reduced"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            6
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 19
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "legacy_key",
+                        "type": "bigIncrements",
+                        "source": {
+                            "position": [
+                                7,
+                                6
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 19
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "autoIncrement": true,
+                            "unsigned": true,
+                            "primary": true
+                        },
+                        "fidelity": "reduced"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            7
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 20
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "purged_at",
+                        "type": "timestamp",
+                        "source": {
+                            "position": [
+                                7,
+                                7
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 20
+                        },
+                        "nullable": true,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "precision": 3
+                        },
+                        "fidelity": "reduced"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            8
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 21
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "remember_token",
+                        "type": "string",
+                        "source": {
+                            "position": [
+                                7,
+                                8
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 21
+                        },
+                        "nullable": true,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "length": 100
+                        },
+                        "fidelity": "reduced"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            9
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 22
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "user_id",
+                        "type": "foreignId",
+                        "source": {
+                            "position": [
+                                7,
+                                9
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 22
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "unsigned": true
+                        },
+                        "fidelity": "reduced"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            10
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 22
+                    },
+                    "execution": "always",
+                    "kind": "add_foreign_key",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "key": {
+                        "name": "orders_user_id_foreign",
+                        "columns": [
+                            "user_id"
+                        ],
+                        "referencedTable": "users",
+                        "referencedColumns": [
+                            "id"
+                        ],
+                        "source": {
+                            "position": [
+                                7,
+                                10
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 22
+                        },
+                        "onDelete": "cascade",
+                        "onUpdate": null,
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            11
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 23
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "category_id",
+                        "type": "foreignIdFor",
+                        "source": {
+                            "position": [
+                                7,
+                                11
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 23
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "references": "id",
+                            "table": "categories",
+                            "unsigned": true
+                        },
+                        "fidelity": "reduced"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            12
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 23
+                    },
+                    "execution": "always",
+                    "kind": "add_foreign_key",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "key": {
+                        "name": "orders_category_id_foreign",
+                        "columns": [
+                            "category_id"
+                        ],
+                        "referencedTable": "categories",
+                        "referencedColumns": [
+                            "id"
+                        ],
+                        "source": {
+                            "position": [
+                                7,
+                                12
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 23
+                        },
+                        "onDelete": null,
+                        "onUpdate": null,
+                        "fidelity": "reduced"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            13
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 24
+                    },
+                    "execution": "always",
+                    "kind": "add_foreign_key",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "key": {
+                        "name": "orders_coupon_id_foreign",
+                        "columns": [
+                            "coupon_id"
+                        ],
+                        "referencedTable": "coupons",
+                        "referencedColumns": [
+                            "code"
+                        ],
+                        "source": {
+                            "position": [
+                                7,
+                                13
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 24
+                        },
+                        "onDelete": "set null",
+                        "onUpdate": null,
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            14
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 25
+                    },
+                    "execution": "always",
+                    "kind": "add_index",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "index": {
+                        "name": "orders_reference_status_unique",
+                        "type": "unique",
+                        "columns": [
+                            "reference",
+                            "status"
+                        ],
+                        "source": {
+                            "position": [
+                                7,
+                                14
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 25
+                        },
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            15
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 26
+                    },
+                    "execution": "always",
+                    "kind": "add_index",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "index": {
+                        "name": "orders_amount_idx",
+                        "type": "index",
+                        "columns": [
+                            "amount"
+                        ],
+                        "source": {
+                            "position": [
+                                7,
+                                15
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 26
+                        },
+                        "fidelity": "full"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            16
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 27
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "buyer_id",
+                        "type": "foreignIdFor",
+                        "source": {
+                            "position": [
+                                7,
+                                16
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 27
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "references": "id",
+                            "table": "users",
+                            "unsigned": true
+                        },
+                        "fidelity": "reduced"
+                    }
+                }
+            ]
+        },
+        {
+            "source": {
+                "position": [
+                    7,
+                    17
+                ],
+                "file": "/fixtures/2026_10_22_000000_example.php",
+                "migration": "2026_10_22_000000_example",
+                "line": 29
+            },
+            "execution": "always",
+            "kind": "alter_table",
+            "table": "orders",
+            "connection": "tenant",
+            "operations": [
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            18
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 30
+                    },
+                    "execution": "always",
+                    "kind": "change_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "note",
+                        "type": "string",
+                        "source": {
+                            "position": [
+                                7,
+                                18
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 30
+                        },
+                        "nullable": false,
+                        "hasDefault": false,
+                        "default": null,
+                        "attributes": {
+                            "length": 40,
+                            "comment": "free text"
+                        },
+                        "fidelity": "reduced"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            19
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 31
+                    },
+                    "execution": "always",
+                    "kind": "add_column",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "column": {
+                        "name": "seen",
+                        "type": "dateTime",
+                        "source": {
+                            "position": [
+                                7,
+                                19
+                            ],
+                            "file": "/fixtures/2026_10_22_000000_example.php",
+                            "migration": "2026_10_22_000000_example",
+                            "line": 31
+                        },
+                        "nullable": true,
+                        "hasDefault": true,
+                        "default": "CURRENT_TIMESTAMP",
+                        "attributes": {
+                            "precision": 3
+                        },
+                        "fidelity": "reduced"
+                    }
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            20
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 32
+                    },
+                    "execution": "always",
+                    "kind": "drop_index",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "type": "unique",
+                    "name": "orders_reference_status_unique",
+                    "columns": [
+                        "reference",
+                        "status"
+                    ]
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            21
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 33
+                    },
+                    "execution": "always",
+                    "kind": "drop_foreign_key",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "name": "orders_coupon_id_foreign",
+                    "columns": []
+                },
+                {
+                    "source": {
+                        "position": [
+                            7,
+                            22
+                        ],
+                        "file": "/fixtures/2026_10_22_000000_example.php",
+                        "migration": "2026_10_22_000000_example",
+                        "line": 34
+                    },
+                    "execution": "always",
+                    "kind": "drop_index",
+                    "table": "orders",
+                    "connection": "tenant",
+                    "type": "primary",
+                    "name": null,
+                    "columns": []
+                }
+            ]
+        }
+    ],
+    "diagnostics": {
+        "items": []
+    },
+    "parsed": true
+}

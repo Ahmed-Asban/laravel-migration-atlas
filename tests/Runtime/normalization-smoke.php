@@ -5,6 +5,9 @@ declare(strict_types=1);
 use MigrationAtlas\Diagnostics\DiagnosticCode;
 use MigrationAtlas\Discovery\MigrationFile;
 use MigrationAtlas\Normalization\OperationNormalizer;
+use MigrationAtlas\Operations\AddColumn;
+use MigrationAtlas\Operations\AddForeignKey;
+use MigrationAtlas\Operations\ChangeColumn;
 use MigrationAtlas\Operations\CreateTable;
 use MigrationAtlas\Operations\ExecutionCertainty;
 use MigrationAtlas\Operations\Fidelity;
@@ -28,6 +31,7 @@ return new class extends \Illuminate\Database\Migrations\Migration {
             $bp->id();
             $bp->string('name', 80)->nullable()->default('guest');
             $bp->timestamps();
+            $bp->foreignId('user_id')->constrained();
             $bp->string('old')->change();
         });
         Structure::connection('archive')->rename('users', 'members');
@@ -51,14 +55,24 @@ $normalizer = new OperationNormalizer;
 $result = $normalizer->normalize($parser->parse($file));
 $create = $result->operations[0] ?? null;
 $rename = $result->operations[1] ?? null;
+$foreignColumn = $create->operations[4] ?? null;
+$foreign = $create->operations[5] ?? null;
+$change = $create->operations[6] ?? null;
 
-if (! $result->parsed || ! $create instanceof CreateTable || count($create->columns) !== 4
+if (! $result->parsed || ! $create instanceof CreateTable || count($create->columns) !== 5
     || $create->connection !== 'tenant' || $create->execution !== ExecutionCertainty::Conditional
     || $create->columns[0]->type !== 'bigint' || $create->columns[0]->fidelity !== Fidelity::Full
     || $create->columns[1]->default !== 'guest' || ! $create->columns[1]->nullable
-    || $create->columns[3]->name !== 'updated_at' || ! $create->operations[4] instanceof UnresolvedOperation
+    || $create->columns[3]->name !== 'updated_at'
+    || ! $foreignColumn instanceof AddColumn || $foreignColumn->column->type !== 'foreignId'
+    || $foreignColumn->column->fidelity !== Fidelity::Reduced
+    || ! $foreign instanceof AddForeignKey || $foreign->key->name !== 'users_user_id_foreign'
+    || $foreign->key->referencedTable !== 'users' || $foreign->key->referencedColumns !== ['id']
+    || $foreign->key->fidelity !== Fidelity::Full
+    || ! $change instanceof ChangeColumn || $change->column->name !== 'old'
+    || $change->column->fidelity !== Fidelity::Reduced
     || ! $rename instanceof RenameTable || $rename->connection !== 'archive'
-    || $rename->source->position !== [9, 7] || count($result->diagnostics) !== 4
+    || $rename->source->position !== [9, 9] || count($result->diagnostics) !== 3
     || isset($GLOBALS['migration_atlas_normalization_smoke_executed'])) {
     throw new RuntimeException('Production normalization smoke failed.');
 }

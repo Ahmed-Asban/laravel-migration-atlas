@@ -13,4 +13,4 @@ it('matches the ordered normalization contract', function (string $fixture) {
     expect($parsed->parsed)->toBeTrue()
         ->and(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR))->toMatchSnapshot()
         ->and(isset($GLOBALS['migration_atlas_normalization_executed']))->toBeFalse();
-})->with(['basic', 'uncertainty']);
+})->with(['basic', 'uncertainty', 'tier-two']);
