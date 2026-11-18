@@ -701,3 +701,59 @@ return new class extends \Illuminate\Database\Migrations\Migration
         ->and($users->status)->toBe(TableStatus::Incomplete)
         ->and(ReplayFixture::hasReason($users, IncompletenessOrigin::Conditional, DiagnosticCode::ShouldRunDetected))->toBeTrue();
 });
+
+it('associates multi-target body events with every compatible candidate', function () {
+    $result = ReplayFixture::replay([
+        '<?php
+use Illuminate\Support\Facades\Schema;
+return new class extends \Illuminate\Database\Migrations\Migration
+{
+    public function up(): void
+    {
+        Schema::create("users", function ($t) { $t->id(); });
+    }
+};',
+        '<?php
+use Illuminate\Support\Facades\Schema;
+return new class extends \Illuminate\Database\Migrations\Migration
+{
+    public function shouldRun(): bool
+    {
+        return true;
+    }
+    public function up(): void
+    {
+        Schema::dropIfExists("users");
+    }
+};',
+        '<?php
+use Illuminate\Support\Facades\Schema;
+return new class extends \Illuminate\Database\Migrations\Migration
+{
+    public function up(): void
+    {
+        Schema::create("users", function ($t) { $t->string("name"); });
+    }
+};',
+        '<?php
+use Illuminate\Support\Facades\Schema;
+return new class extends \Illuminate\Database\Migrations\Migration
+{
+    public function up(): void
+    {
+        Schema::table("users", function ($t) { $t->string("email"); });
+    }
+};',
+    ]);
+
+    $candidates = $result->registry->byName('default', 'users');
+
+    expect(count($candidates))->toBe(2)
+        ->and(count($result->events))->toBe(7)
+        ->and($candidates[0]->columns)->toHaveKey('email')
+        ->and($candidates[1]->columns)->toHaveKey('email')
+        // The conditionally dropped identity carries its possible drop;
+        // the recreated identity carries its create and the shared alter.
+        ->and(count($result->lineageEvents($candidates[0]->lineageId)))->toBe(5)
+        ->and(count($result->lineageEvents($candidates[1]->lineageId)))->toBe(4);
+});

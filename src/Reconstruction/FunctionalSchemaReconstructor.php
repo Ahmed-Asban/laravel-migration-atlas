@@ -41,7 +41,9 @@ use MigrationAtlas\Reconstruction\State\TableStatus;
  * The functional replay fold. Every rule of the approved replay table is
  * applied here: partitions never merge, uncertainty is sticky and never
  * fabricated away, conditional operations retain candidates instead of
- * choosing branches, and whole-file skips cap the entire run.
+ * choosing branches, and whole-file skips cap the entire run. Each event
+ * records the identities it touched so history can group timelines by
+ * lineage without re-running replay logic.
  */
 final class FunctionalSchemaReconstructor implements SchemaReconstructor
 {
@@ -51,6 +53,9 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
 
     /** @var list<HistoryEvent> */
     private array $events = [];
+
+    /** @var array<int, list<int>> */
+    private array $lineageEvents = [];
 
     /** @var list<Diagnostic> */
     private array $diagnostics = [];
@@ -68,11 +73,17 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
 
     private ?string $date = null;
 
+    private bool $announceBody = true;
+
+    /** @var list<int> */
+    private array $bodySequences = [];
+
     public function replay(array $migrations): ReconstructionResult
     {
         $this->registry = TableRegistry::empty();
         $this->ledger = new UncertaintyLedger;
         $this->events = [];
+        $this->lineageEvents = [];
         $this->diagnostics = [];
         $this->capReasons = [];
         $this->sequence = 0;
@@ -98,9 +109,9 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
             }
         }
 
-        return new ReconstructionResult($this->registry, $this->events, $this->ledger,
-            new DiagnosticCollection($this->diagnostics), count($migrations), $this->analyzed,
-            $this->skipped, $this->sequence);
+        return new ReconstructionResult($this->registry, $this->events, $this->lineageEvents,
+            $this->ledger, new DiagnosticCollection($this->diagnostics), count($migrations),
+            $this->analyzed, $this->skipped, $this->sequence);
     }
 
     private function apply(Operation $operation): void
@@ -139,13 +150,14 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
         $connection = $operation->connection;
 
         if ($this->conditional($operation)) {
-            $this->event($operation);
-
             $live = $this->claimingName($connection, $operation->table);
+            $sequence = $this->event($operation);
 
             if ($live !== []) {
                 // The conditional create probably never ran: the existing
                 // identity remains the competing candidate.
+                $this->associate($sequence, $this->ids($live));
+
                 foreach ($live as $lineage) {
                     $this->store($connection, $this->touch($lineage, [$this->conditionalReason($operation)], false));
                 }
@@ -156,6 +168,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
             $lineage = $this->birth($operation->table, $connection, Existence::Unknown,
                 Origin::CreatedHere, $operation->source, [$this->conditionalReason($operation)]);
             $this->store($connection, $lineage);
+            $this->associate($sequence, [$lineage->lineageId]);
             $lineage = $this->applyBody($lineage, $operation->operations, $connection);
             $this->store($connection, $lineage);
 
@@ -163,13 +176,14 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
         }
 
         $definitelyLive = $this->claimingName($connection, $operation->table, certainOnly: true, existences: [Existence::Present]);
-        $this->event($operation);
+        $sequence = $this->event($operation);
 
         if ($definitelyLive !== [] && $definitelyLive[0]->origin === Origin::Unknown) {
             // A create over a phantom lineage retains the earlier
             // ALTER_UNKNOWN_TABLE uncertainty instead of duplicating.
             $lineage = $this->applyBody($definitelyLive[0], $operation->operations, $connection);
             $this->store($connection, $lineage);
+            $this->associate($sequence, [$lineage->lineageId]);
 
             return;
         }
@@ -177,6 +191,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
         if ($definitelyLive !== []) {
             $reason = $this->conflict($operation, DiagnosticCode::DuplicateTableCreate);
             $this->warn(DiagnosticCode::DuplicateTableCreate, $operation);
+            $this->associate($sequence, $this->ids($definitelyLive));
 
             foreach ($definitelyLive as $lineage) {
                 $this->store($connection, $this->touch($lineage, [$reason], false));
@@ -185,6 +200,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
             $lineage = $this->birth($operation->table, $connection, $this->cappedExistence(),
                 Origin::CreatedHere, $operation->source, [$reason, ...$this->capReasons]);
             $this->store($connection, $lineage);
+            $this->associate($sequence, [$lineage->lineageId]);
             $lineage = $this->applyBody($lineage, $operation->operations, $connection);
             $this->store($connection, $lineage);
 
@@ -200,6 +216,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
             $lineage = $this->birth($operation->table, $connection, $this->cappedExistence(),
                 Origin::CreatedHere, $operation->source, [$reason, ...$this->capReasons]);
             $this->store($connection, $lineage);
+            $this->associate($sequence, [$lineage->lineageId]);
             $lineage = $this->applyBody($lineage, $operation->operations, $connection);
             $this->store($connection, $lineage);
 
@@ -209,6 +226,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
         $lineage = $this->birth($operation->table, $connection, $this->cappedExistence(),
             Origin::CreatedHere, $operation->source, $this->capReasons);
         $this->store($connection, $lineage);
+        $this->associate($sequence, [$lineage->lineageId]);
         $lineage = $this->applyBody($lineage, $operation->operations, $connection);
         $this->store($connection, $lineage);
     }
@@ -216,7 +234,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
     private function alterTable(AlterTable $operation): void
     {
         $targets = $this->claimingName($operation->connection, $operation->table);
-        $this->event($operation);
+        $sequence = $this->event($operation);
 
         if ($targets === []) {
             // No analyzed migration created this table: a phantom keeps the
@@ -226,6 +244,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
             $lineage = $this->birth($operation->table, $operation->connection, $this->cappedExistence(),
                 Origin::Unknown, $operation->source, [$reason, ...$this->capReasons]);
             $this->store($operation->connection, $lineage);
+            $this->associate($sequence, [$lineage->lineageId]);
             $lineage = $this->applyBody($lineage, $operation->operations, $operation->connection);
             $this->store($operation->connection, $lineage);
 
@@ -233,6 +252,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
         }
 
         $conditional = $this->conditional($operation);
+        $this->associate($sequence, $this->ids($targets));
 
         foreach ($targets as $index => $lineage) {
             $touched = $conditional
@@ -248,7 +268,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
     {
         $known = $this->registry->byName($operation->connection, $operation->table);
         $targets = $this->claimingName($operation->connection, $operation->table);
-        $this->event($operation);
+        $sequence = $this->event($operation);
 
         if ($known === []) {
             if (! $operation->ifExists) {
@@ -260,7 +280,13 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
 
         if ($targets === []) {
             // Only tombstones carry the name: the table is certainly absent
-            // and nothing changes.
+            // and nothing changes, but the intent still belongs to the
+            // identity's timeline.
+            $this->associate($sequence, $this->ids(array_values(array_filter(
+                $known,
+                static fn (TableState $lineage): bool => $lineage->existence === Existence::Absent,
+            ))));
+
             return;
         }
 
@@ -268,6 +294,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
             && $targets[0]->name === $operation->table && $targets[0]->nameCertain;
 
         if ($certain && ! $this->conditional($operation)) {
+            $this->associate($sequence, $this->ids($targets));
             $dropped = $targets[0]->with(droppedBy: $operation->source, existence: Existence::Absent);
             $this->store($operation->connection, $dropped);
 
@@ -277,6 +304,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
         // Uncertain or conditional destruction keeps a conservative unknown
         // candidate; a possible drop is recorded, never a definitive
         // tombstone.
+        $this->associate($sequence, $this->ids($targets));
         $reason = $this->conditional($operation)
             ? $this->conditionalReason($operation)
             : $this->conflict($operation, DiagnosticCode::DropUnknownTable);
@@ -291,7 +319,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
     {
         $from = $this->claimingName($operation->connection, $operation->from);
         $to = $this->claimingName($operation->connection, $operation->to);
-        $this->event($operation);
+        $sequence = $this->event($operation);
 
         if ($from === []) {
             $this->warn(DiagnosticCode::RenameUnknownTable, $operation);
@@ -304,6 +332,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
             // incomplete.
             $reason = $this->conflict($operation, DiagnosticCode::RenameTargetConflict);
             $this->warn(DiagnosticCode::RenameTargetConflict, $operation);
+            $this->associate($sequence, [...$this->ids($from), ...$this->ids($to)]);
 
             foreach ([$from, $to] as $group) {
                 foreach ($group as $lineage) {
@@ -313,6 +342,8 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
 
             return;
         }
+
+        $this->associate($sequence, $this->ids($from));
 
         if ($this->conditional($operation)) {
             foreach ($from as $lineage) {
@@ -340,15 +371,24 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
     /**
      * Apply a create or alter body to one lineage. Announced events,
      * diagnostics, and nested unresolved effects fire once for the first
-     * compatible candidate; state effects apply to every candidate.
+     * compatible candidate; state effects and event associations apply to
+     * every candidate.
      *
      * @param  list<Operation>  $operations
      */
     private function applyBody(TableState $lineage, array $operations, string $connection, bool $announce = true): TableState
     {
+        $this->announceBody = $announce;
+
+        if ($announce) {
+            $this->bodySequences = [];
+        }
+
+        $bodyIndex = 0;
+
         foreach ($operations as $operation) {
             if ($operation instanceof UnresolvedOperation) {
-                if ($announce) {
+                if ($this->announceBody) {
                     $this->unresolved($operation);
                 }
 
@@ -368,8 +408,17 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
                 continue;
             }
 
-            if ($announce) {
-                $this->event($operation);
+            if ($this->announceBody) {
+                $sequence = $this->event($operation, $this->columns($operation));
+                $this->bodySequences[] = $sequence;
+            } else {
+                $sequence = $this->bodySequences[$bodyIndex] ?? null;
+            }
+
+            $bodyIndex++;
+
+            if ($sequence !== null) {
+                $this->associate($sequence, [$lineage->lineageId]);
             }
 
             $lineage = match (true) {
@@ -386,6 +435,55 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
         }
 
         return $lineage;
+    }
+
+    /**
+     * The column identities one operation touches; rename events list the
+     * source name first and the target name second.
+     *
+     * @return list<string>
+     */
+    private function columns(Operation $operation): array
+    {
+        return match (true) {
+            $operation instanceof AddColumn, $operation instanceof ChangeColumn => [$operation->column->name],
+            $operation instanceof DropColumn => $operation->columns,
+            $operation instanceof RenameColumn => [$operation->from, $operation->to],
+            default => [],
+        };
+    }
+
+    /** @param  list<TableState>  $lineages @return list<int> */
+    /**
+     * @param  list<TableState>  $lineages
+     * @return list<int>
+     */
+    private function ids(array $lineages): array
+    {
+        $ids = [];
+
+        foreach ($lineages as $lineage) {
+            $ids[] = $lineage->lineageId;
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @param  list<int>  $lineageIds
+     */
+    private function associate(int $sequence, array $lineageIds): void
+    {
+        foreach ($lineageIds as $id) {
+            $events = $this->lineageEvents[$id] ?? [];
+
+            if (end($events) === $sequence) {
+                continue;
+            }
+
+            $events[] = $sequence;
+            $this->lineageEvents[$id] = $events;
+        }
     }
 
     private function addColumn(TableState $lineage, AddColumn $operation): TableState
@@ -502,7 +600,7 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
 
         $column = $source->withRename($operation->to, $operation->source);
 
-        return $lineage->withColumn($column);
+        return $lineage->withRenamedColumn($operation->from, $column);
     }
 
     private function changeColumn(TableState $lineage, ChangeColumn $operation): TableState
@@ -708,10 +806,13 @@ final class FunctionalSchemaReconstructor implements SchemaReconstructor
         $this->registry = $this->registry->withLineage($connection, $lineage);
     }
 
-    private function event(Operation $operation): void
+    /** @param  list<string>  $columns */
+    private function event(Operation $operation, array $columns = []): int
     {
         $this->events[] = new HistoryEvent(++$this->sequence, $this->date, $operation->kind,
-            $operation->describe(), $this->conditional($operation), $this->file, $operation->source->line);
+            $operation->describe(), $this->conditional($operation), $this->file, $operation->source->line, $columns);
+
+        return $this->sequence;
     }
 
     private function warn(DiagnosticCode $code, Operation $operation): void

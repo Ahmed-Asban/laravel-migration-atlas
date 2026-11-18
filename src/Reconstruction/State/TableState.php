@@ -98,6 +98,19 @@ final readonly class TableState
     }
 
     /**
+     * Move one column identity to a new current name; the old key must not
+     * survive as a second current column.
+     */
+    public function withRenamedColumn(string $from, ColumnState $column): self
+    {
+        $columns = $this->columns;
+        unset($columns[$from]);
+        $columns[$column->name] = $column;
+
+        return $this->with(columns: $columns);
+    }
+
+    /**
      * Record another statically observed candidate current name; the
      * lineage's current name becomes uncertain.
      */

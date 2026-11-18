@@ -4,15 +4,15 @@ Laravel Migration Atlas is a Composer package for reconstructing expected schema
 migration history, and column lineage through static analysis of migration source.
 The planned analyzer will never execute migrations or connect to a database.
 
-**Status: discovery, static parsing, operation normalization, and schema
-reconstruction implemented.** Package integration, deterministic discovery,
-a guarded parser API, typed operations, and a pure replay engine are
-available: tables and basic columns at full fidelity; Tier-2 columns,
-indexes, foreign keys, `change()`, and dynamic defaults at explicitly
-reduced fidelity; replayed table states carry completeness, existence, name
-certainty, fidelity, lineages, and uncertainty reasons. History/trace
-results and CLI rendering remain subsequent work. This repository is not yet
-a functional schema inspection tool or a published package release.
+**Status: discovery, static parsing, operation normalization, schema
+reconstruction, and history/trace results implemented.** Package integration,
+deterministic discovery, a guarded parser API, typed operations, a pure
+replay engine, and the `Atlas` orchestrator are available: `Atlas::inspect`,
+`Atlas::history`, and `Atlas::trace` resolve lineages, timelines, and column
+chains with the full uncertainty contract. Only CLI rendering remains
+subsequent work; the commands still report their discovery-only behavior.
+This repository is not yet a functional schema inspection tool or a
+published package release.
 
 ## Requirements
 
@@ -60,10 +60,12 @@ Invalid/unreadable discovery directories also exit 1 with an explanatory error.
 `--json` does not yet produce the future JSON contract; `--connection` and
 `--strict` do not yet perform schema analysis.
 
-The commands retain their discovery-only behavior. The parser and normalizer are
-available through the `MigrationAtlas\Parsing\MigrationParser` and
-`MigrationAtlas\Normalization\OperationNormalizer` container bindings; they are
-not yet connected to a complete command analysis pipeline.
+The commands retain their discovery-only behavior. The complete analysis
+pipeline is available through the `MigrationAtlas\Atlas` orchestrator and its
+container bindings: `Atlas::inspect`, `Atlas::history`, and `Atlas::trace`
+run discovery, parsing, normalization, and replay, then resolve one command
+result each. The commands themselves are wired to these results in the CLI
+milestone.
 
 ## Migration discovery
 
@@ -253,6 +255,44 @@ enforced by architecture tests.
   becomes incomplete with unknown existence and names until the result is
   composed. A verified empty `up()` is an analyzed no-op and caps nothing.
 
+## History, tracing, and command results
+
+`MigrationAtlas\Atlas` orchestrates the whole pure pipeline for one command
+invocation and resolves a result DTO that presentation can render without
+domain knowledge. Every result carries the shared analysis envelope
+(`AnalysisMeta`): command identity, effective completeness, the
+always-present global-uncertainty rollup with ledger sources in replay
+order, and the reconciled counters. Error results keep the envelope,
+counters, and diagnostics with a null data payload, never fabricating one.
+
+- Table resolution follows the approved algorithm: a single present or
+  uncertain candidate resolves; a certain live lineage wins over certain
+  tombstones; several live or uncertain candidates are
+  `AMBIGUOUS_TABLE_IDENTITY` errors listing every candidate with none
+  silently chosen; only tombstones resolve to the latest certain one; no
+  identity at all is `TABLE_NOT_FOUND`, caveated with the run's unresolved
+  operations and skipped files so absence is never claimed as proof.
+- `Atlas::inspect` resolves one identity and projects its status, existence,
+  possible names, name certainty, reasons, fidelity, provenance, columns,
+  indexes, foreign keys, and a per-lineage event summary. Complete certain
+  absence renders `dropped` with `dropped_by` and last-known state;
+  incompleteness takes precedence over a tombstone.
+- `Atlas::history` renders every lineage that carried the requested name:
+  earlier dead identities by their drop order, then the primary one, each
+  with its state axes and its event timeline. Events carry sequence, date,
+  operation, summary, conditional flag, and provenance; conditional events
+  record intent, not proof. `current_name` is null when uncertain.
+- `Atlas::trace` resolves the table lineage, then walks the column identity
+  chain through renames in both directions: tracing a former name resolves
+  forward to the current name, and tracing the current name still shows the
+  original add. Certain drops terminate the chain with `dropped_by`; a
+  certainly absent table makes its columns absent while keeping their
+  last-known definitions; uncertain tables or columns report `exists` null
+  with observed possible names. Unknown columns are `COLUMN_NOT_FOUND`
+  errors.
+- An empty discovery is `NO_MIGRATIONS_FOUND`; a run where every file was
+  skipped still resolves target lookups as caveated `TABLE_NOT_FOUND`.
+
 ## Development
 
 ```shell
@@ -294,7 +334,7 @@ imports, connection routing, fluent/arrow callbacks, source locations, size and
 syntax failures, typed normalization, skip markers, and migration non-execution.
 
 Current implementation, verification results, and limitations are recorded in
-[the M5 handoff](M5-HANDOFF.md). The [M4 handoff](M4-HANDOFF.md), [M3 handoff](M3-HANDOFF.md), [M2 handoff](M2-HANDOFF.md), [M1 handoff](M1-HANDOFF.md), and
+[the M6 handoff](M6-HANDOFF.md). The [M5 handoff](M5-HANDOFF.md), [M4 handoff](M4-HANDOFF.md), [M3 handoff](M3-HANDOFF.md), [M2 handoff](M2-HANDOFF.md), [M1 handoff](M1-HANDOFF.md), and
 [M0 verification handoff](M0-HANDOFF.md) preserve the earlier checkpoints.
 
 ## Design and scope
@@ -303,9 +343,9 @@ The approved design lives in [the MVP specification](docs/mvp-spec.md),
 [architecture](docs/architecture.md), and [implementation plan](docs/implementation-plan.md).
 The specification documents preserve the approved design baseline and may still
 contain their original pre-implementation approval wording. Current progress is
-recorded in this README and the milestone handoffs. M5 supplies the replayed
-schema state machine; history/trace result assembly and complete CLI rendering
-require subsequent review and implementation.
+recorded in this README and the milestone handoffs. M6 supplies history
+timelines, column tracing, and the three command result DTOs; only the CLI
+renderers and exit-code semantics remain before the acceptance sweep.
 
 ## License
 

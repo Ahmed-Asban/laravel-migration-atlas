@@ -27,4 +27,8 @@ enum DiagnosticCode: string
     case RenameUnknownTable = 'RENAME_UNKNOWN_TABLE';
     case RenameUnknownColumn = 'RENAME_UNKNOWN_COLUMN';
     case RenameTargetConflict = 'RENAME_TARGET_CONFLICT';
+    case NoMigrationsFound = 'NO_MIGRATIONS_FOUND';
+    case TableNotFound = 'TABLE_NOT_FOUND';
+    case ColumnNotFound = 'COLUMN_NOT_FOUND';
+    case AmbiguousTableIdentity = 'AMBIGUOUS_TABLE_IDENTITY';
 }

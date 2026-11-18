@@ -13,6 +13,8 @@ use MigrationAtlas\Discovery\FilesystemMigrationFinder;
 use MigrationAtlas\Discovery\MigrationDirectoryReader;
 use MigrationAtlas\Discovery\MigrationFinder;
 use MigrationAtlas\Discovery\NativeMigrationDirectoryReader;
+use MigrationAtlas\History\ColumnTraceResolver;
+use MigrationAtlas\History\TableHistory;
 use MigrationAtlas\Normalization\OperationNormalizer;
 use MigrationAtlas\Normalization\SupportMatrix;
 use MigrationAtlas\Parsing\MigrationParser;
@@ -34,6 +36,9 @@ final class MigrationAtlasServiceProvider extends ServiceProvider
         $this->app->bind(SupportMatrix::class);
         $this->app->bind(OperationNormalizer::class);
         $this->app->bind(SchemaReconstructor::class, FunctionalSchemaReconstructor::class);
+        $this->app->bind(TableHistory::class);
+        $this->app->bind(ColumnTraceResolver::class);
+        $this->app->bind(Atlas::class);
         $this->app->bind(MigrationParser::class, function (): MigrationParser {
             $maxFileSize = config('migration-atlas.max_file_size');
 
