@@ -19,4 +19,12 @@ enum DiagnosticCode: string
     case UnresolvedConditionalRegion = 'UNRESOLVED_CONDITIONAL_REGION';
     case UnresolvedUnknownMethod = 'UNRESOLVED_UNKNOWN_METHOD';
     case RawSqlDetected = 'RAW_SQL_DETECTED';
+    case DuplicateTableCreate = 'DUPLICATE_TABLE_CREATE';
+    case DuplicateColumn = 'DUPLICATE_COLUMN';
+    case AlterUnknownTable = 'ALTER_UNKNOWN_TABLE';
+    case DropUnknownTable = 'DROP_UNKNOWN_TABLE';
+    case DropUnknownColumn = 'DROP_UNKNOWN_COLUMN';
+    case RenameUnknownTable = 'RENAME_UNKNOWN_TABLE';
+    case RenameUnknownColumn = 'RENAME_UNKNOWN_COLUMN';
+    case RenameTargetConflict = 'RENAME_TARGET_CONFLICT';
 }

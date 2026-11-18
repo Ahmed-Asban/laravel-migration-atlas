@@ -15,6 +15,9 @@ use MigrationAtlas\Operations\RenameTable;
 use MigrationAtlas\Operations\UnresolvedOperation;
 use MigrationAtlas\Parsing\MigrationSourceReader;
 use MigrationAtlas\Parsing\PhpParserMigrationParser;
+use MigrationAtlas\Reconstruction\FunctionalSchemaReconstructor;
+use MigrationAtlas\Reconstruction\State\Existence;
+use MigrationAtlas\Reconstruction\State\TableStatus;
 
 require $argv[1] ?? dirname(__DIR__, 2).'/vendor/autoload.php';
 
@@ -75,6 +78,17 @@ if (! $result->parsed || ! $create instanceof CreateTable || count($create->colu
     || $rename->source->position !== [9, 9] || count($result->diagnostics) !== 3
     || isset($GLOBALS['migration_atlas_normalization_smoke_executed'])) {
     throw new RuntimeException('Production normalization smoke failed.');
+}
+
+$replayed = (new FunctionalSchemaReconstructor)->replay([$result]);
+$users = $replayed->registry->byName('tenant', 'users');
+
+if (count($users) !== 1 || $users[0]->status !== TableStatus::Incomplete
+    || $users[0]->existence !== Existence::Unknown
+    || count($users[0]->columns) !== 5 || $users[0]->columns['id']->type !== 'bigint'
+    || count($users[0]->foreignKeys) !== 1 || $users[0]->foreignKeys[0]->name !== 'users_user_id_foreign'
+    || $replayed->migrationsAnalyzed !== 1 || $replayed->operationsApplied !== 9) {
+    throw new RuntimeException('Production reconstruction smoke failed.');
 }
 
 $reader->source = '<?php syntax error;';

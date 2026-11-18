@@ -4,13 +4,15 @@ Laravel Migration Atlas is a Composer package for reconstructing expected schema
 migration history, and column lineage through static analysis of migration source.
 The planned analyzer will never execute migrations or connect to a database.
 
-**Status: discovery, static parsing, and operation normalization implemented.**
-Package integration, deterministic discovery, a guarded parser API, and typed
-operations are available: tables, basic columns and modifiers at full
-fidelity; Tier-2 columns, indexes, foreign keys, `change()`, and dynamic
-defaults at explicitly reduced fidelity. Reconstruction, history/trace, and
-result rendering remain subsequent work. This repository is not yet a
-functional schema inspection tool or a published package release.
+**Status: discovery, static parsing, operation normalization, and schema
+reconstruction implemented.** Package integration, deterministic discovery,
+a guarded parser API, typed operations, and a pure replay engine are
+available: tables and basic columns at full fidelity; Tier-2 columns,
+indexes, foreign keys, `change()`, and dynamic defaults at explicitly
+reduced fidelity; replayed table states carry completeness, existence, name
+certainty, fidelity, lineages, and uncertainty reasons. History/trace
+results and CLI rendering remain subsequent work. This repository is not yet
+a functional schema inspection tool or a published package release.
 
 ## Requirements
 
@@ -202,6 +204,55 @@ callback effects preserve the parser's conservative uncertainty.
 The normalized DTO JSON snapshots are an internal test contract. They are not
 the final command JSON envelope or a reconstruction result.
 
+## Schema reconstruction
+
+`SchemaReconstructor::replay(list<NormalizedMigration>)` (resolved from the
+container to `FunctionalSchemaReconstructor`) folds the ordered operation
+stream into a `ReconstructionResult`: a partition-aware `TableRegistry`,
+the ordered `HistoryEvent` log, the `UncertaintyLedger`, replay and carried
+diagnostics, and the reconciled counters
+(`migrations_scanned = analyzed + skipped`, `operations_applied` excludes
+skip markers). Replay is pure: no filesystem, database, or parser access,
+enforced by architecture tests.
+
+- The state model separates four axes per lineage: `TableStatus`
+  (completeness only), `Existence` (present/absent/unknown, where absent is
+  a certain tombstone), name certainty with observed possible names, and
+  element fidelity (sticky per element; a table is reduced once any element
+  is). Columns, indexes, and foreign keys replay with provenance; dropped
+  columns keep last-known definitions with their drop source.
+- Connection partitions never merge. A lineage exists within exactly one
+  partition keyed by the operation's connection routing.
+- Certain create/rename/drop follow their lineage rules: create starts a
+  lineage, rename moves within the partition and records former names, drop
+  writes a tombstone with `droppedBy`. A drop → re-create starts a fresh
+  lineage while the old one stays tombstoned.
+- Conflicts are diagnostics, never crashes: `DUPLICATE_TABLE_CREATE` keeps
+  both live identities incomplete, `RENAME_TARGET_CONFLICT` does not apply
+  the rename and marks both tables, `DUPLICATE_COLUMN` replaces the column
+  and marks the table, `ALTER_UNKNOWN_TABLE` creates an unknown-origin
+  phantom that is incomplete from birth, and unknown drop/rename targets
+  warn without fabricating state. A create over a phantom retains the
+  phantom's uncertainty; a create over a possibly-absent identity keeps
+  both candidates and their reasons.
+- Conditional operations (`shouldRun()`) never choose branches: creates are
+  unknown-existence candidates, drops keep the pre-state as possible drops
+  without `droppedBy`, renames retain both possible names with uncertain
+  current names, and later operations touch all compatible candidates
+  conservatively. Their reasons stay sticky.
+- Unresolved operations act through their attribution: attributed effects
+  mark matching lineages with a direct reason; name-scoped effects match
+  current/former/possible names across partitions (including rename
+  endpoints); unattributable effects apply the live-window rule, marking
+  everything live or possibly live incomplete with uncertain names and
+  demoting tombstones to unknown. All of them are retained in the ledger
+  even when no lineage matched.
+- A skipped file (syntax error, oversized, unreadable source) contributes
+  one `skipped_migration` ledger entry and caps the entire run: every
+  lineage — earlier, later, tombstoned, or recreated, in every partition —
+  becomes incomplete with unknown existence and names until the result is
+  composed. A verified empty `up()` is an analyzed no-op and caps nothing.
+
 ## Development
 
 ```shell
@@ -243,7 +294,7 @@ imports, connection routing, fluent/arrow callbacks, source locations, size and
 syntax failures, typed normalization, skip markers, and migration non-execution.
 
 Current implementation, verification results, and limitations are recorded in
-[the M4 handoff](M4-HANDOFF.md). The [M3 handoff](M3-HANDOFF.md), [M2 handoff](M2-HANDOFF.md), [M1 handoff](M1-HANDOFF.md), and
+[the M5 handoff](M5-HANDOFF.md). The [M4 handoff](M4-HANDOFF.md), [M3 handoff](M3-HANDOFF.md), [M2 handoff](M2-HANDOFF.md), [M1 handoff](M1-HANDOFF.md), and
 [M0 verification handoff](M0-HANDOFF.md) preserve the earlier checkpoints.
 
 ## Design and scope
@@ -252,10 +303,9 @@ The approved design lives in [the MVP specification](docs/mvp-spec.md),
 [architecture](docs/architecture.md), and [implementation plan](docs/implementation-plan.md).
 The specification documents preserve the approved design baseline and may still
 contain their original pre-implementation approval wording. Current progress is
-recorded in this README and the milestone handoffs. M4 supplies index,
-foreign-key, `change()`, and Tier-2 normalization; reconstruction,
-history/trace, and complete CLI rendering require subsequent review and
-implementation.
+recorded in this README and the milestone handoffs. M5 supplies the replayed
+schema state machine; history/trace result assembly and complete CLI rendering
+require subsequent review and implementation.
 
 ## License
 

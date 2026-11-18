@@ -19,6 +19,8 @@ use MigrationAtlas\Parsing\MigrationParser;
 use MigrationAtlas\Parsing\MigrationSourceReader;
 use MigrationAtlas\Parsing\NativeMigrationSourceReader;
 use MigrationAtlas\Parsing\PhpParserMigrationParser;
+use MigrationAtlas\Reconstruction\FunctionalSchemaReconstructor;
+use MigrationAtlas\Reconstruction\SchemaReconstructor;
 
 final class MigrationAtlasServiceProvider extends ServiceProvider
 {
@@ -31,6 +33,7 @@ final class MigrationAtlasServiceProvider extends ServiceProvider
         $this->app->bind(MigrationSourceReader::class, NativeMigrationSourceReader::class);
         $this->app->bind(SupportMatrix::class);
         $this->app->bind(OperationNormalizer::class);
+        $this->app->bind(SchemaReconstructor::class, FunctionalSchemaReconstructor::class);
         $this->app->bind(MigrationParser::class, function (): MigrationParser {
             $maxFileSize = config('migration-atlas.max_file_size');
 

@@ -40,6 +40,40 @@ arch('normalization operates on data without parsing or reading source')
         'scandir',
     ]);
 
+arch('reconstruction replays pure data without parsing, discovery or filesystem access')
+    ->expect('MigrationAtlas\Reconstruction')
+    ->not->toUse([
+        'Illuminate\Database',
+        'Illuminate\Support\Facades\DB',
+        'Illuminate\Support\Facades\Schema',
+        'PDO',
+        'MigrationAtlas\Parsing',
+        'file_get_contents',
+        'fopen',
+        'scandir',
+        'eval',
+        'include',
+        'include_once',
+        'require',
+        'require_once',
+        'exec',
+        'shell_exec',
+        'system',
+        'passthru',
+        'proc_open',
+        'popen',
+    ]);
+
+arch('history events remain framework and pipeline independent')
+    ->expect('MigrationAtlas\History')
+    ->not->toUse([
+        'Illuminate',
+        'PhpParser',
+        'MigrationAtlas\Parsing',
+        'MigrationAtlas\Discovery',
+        'MigrationAtlas\Normalization',
+    ]);
+
 arch('schema operations do not depend on framework or pipeline services')
     ->expect('MigrationAtlas\Operations')
     ->not->toUse([
