@@ -99,13 +99,19 @@ final readonly class TableState
 
     /**
      * Move one column identity to a new current name; the old key must not
-     * survive as a second current column.
+     * survive as a second current column and the column keeps its position.
      */
     public function withRenamedColumn(string $from, ColumnState $column): self
     {
-        $columns = $this->columns;
-        unset($columns[$from]);
-        $columns[$column->name] = $column;
+        $columns = [];
+
+        foreach ($this->columns as $key => $existing) {
+            $columns[$key === $from ? $column->name : $key] = $key === $from ? $column : $existing;
+        }
+
+        if (! array_key_exists($from, $this->columns)) {
+            $columns[$column->name] = $column;
+        }
 
         return $this->with(columns: $columns);
     }

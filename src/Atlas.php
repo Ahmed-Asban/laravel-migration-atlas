@@ -59,7 +59,7 @@ final class Atlas
 
         if (count($list) === 0) {
             return new InspectResult($this->meta('schema:inspect', $table, $connection, null),
-                null, new DiagnosticCollection([$this->noMigrations()]));
+                null, $this->noMigrationsResult($list));
         }
 
         $resolution = $this->history->resolve($replay, $table, $connection);
@@ -67,7 +67,7 @@ final class Atlas
         if ($resolution->kind === TableResolutionKind::NotFound) {
             return new InspectResult(
                 $this->meta('schema:inspect', $table, $connection, $replay, caveated: true),
-                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table)));
+                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table, $connection)));
         }
 
         if ($resolution->kind === TableResolutionKind::Ambiguous) {
@@ -108,7 +108,7 @@ final class Atlas
 
         if (count($list) === 0) {
             return new HistoryResult($this->meta('schema:history', $table, $connection, null),
-                null, new DiagnosticCollection([$this->noMigrations()]));
+                null, $this->noMigrationsResult($list));
         }
 
         $resolution = $this->history->resolve($replay, $table, $connection);
@@ -116,7 +116,7 @@ final class Atlas
         if ($resolution->kind === TableResolutionKind::NotFound) {
             return new HistoryResult(
                 $this->meta('schema:history', $table, $connection, $replay, caveated: true),
-                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table)));
+                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table, $connection)));
         }
 
         if ($resolution->kind === TableResolutionKind::Ambiguous) {
@@ -164,7 +164,7 @@ final class Atlas
 
         if (count($list) === 0) {
             return new TraceResult($this->meta('schema:trace', $table, $connection, null),
-                null, new DiagnosticCollection([$this->noMigrations()]));
+                null, $this->noMigrationsResult($list));
         }
 
         $resolution = $this->history->resolve($replay, $table, $connection);
@@ -172,7 +172,7 @@ final class Atlas
         if ($resolution->kind === TableResolutionKind::NotFound) {
             return new TraceResult(
                 $this->meta('schema:trace', $table, $connection, $replay, caveated: true),
-                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table)));
+                null, $this->withError($replay, $list, $this->tableNotFound($replay, $table, $connection)));
         }
 
         if ($resolution->kind === TableResolutionKind::Ambiguous) {
@@ -308,7 +308,7 @@ final class Atlas
         return $lineage->origin === Origin::CreatedHere ? $lineage->source : null;
     }
 
-    private function tableNotFound(ReconstructionResult $replay, string $table): Diagnostic
+    private function tableNotFound(ReconstructionResult $replay, string $table, string $connection): Diagnostic
     {
         if ($replay->ledger->entries() !== []) {
             $message = "No analyzed migration resolves '{$table}'. Unresolved operations or skipped files "
@@ -317,7 +317,34 @@ final class Atlas
             $message = "No analyzed migration defines '{$table}'.";
         }
 
+        $partitions = [];
+
+        foreach (array_keys($replay->registry->partitions()) as $partition) {
+            if ($partition === $connection) {
+                continue;
+            }
+
+            foreach ($replay->registry->byName($partition, $table) as $lineage) {
+                if ($lineage->existence !== Existence::Absent) {
+                    $partitions[$partition] = true;
+                }
+            }
+        }
+
+        if ($partitions !== []) {
+            $message .= ' This name matches identities in other partition(s): '.implode(', ', array_keys($partitions)).'.';
+        }
+
         return new Diagnostic(DiagnosticCode::TableNotFound, DiagnosticSeverity::Error, $message, null, null);
+    }
+
+    /**
+     * The no-migrations error envelope keeps any discovery warnings the
+     * empty scan still produced.
+     */
+    private function noMigrationsResult(MigrationList $list): DiagnosticCollection
+    {
+        return new DiagnosticCollection([...$list->diagnostics->items, $this->noMigrations()]);
     }
 
     /**

@@ -4,15 +4,13 @@ Laravel Migration Atlas is a Composer package for reconstructing expected schema
 migration history, and column lineage through static analysis of migration source.
 The planned analyzer will never execute migrations or connect to a database.
 
-**Status: discovery, static parsing, operation normalization, schema
-reconstruction, and history/trace results implemented.** Package integration,
-deterministic discovery, a guarded parser API, typed operations, a pure
-replay engine, and the `Atlas` orchestrator are available: `Atlas::inspect`,
-`Atlas::history`, and `Atlas::trace` resolve lineages, timelines, and column
-chains with the full uncertainty contract. Only CLI rendering remains
-subsequent work; the commands still report their discovery-only behavior.
-This repository is not yet a functional schema inspection tool or a
-published package release.
+**Status: the analyzer is implemented.** Discovery, static parsing, operation
+normalization, schema reconstruction, history/trace resolution, and the CLI
+renderers are complete: `schema:inspect`, `schema:history`, and
+`schema:trace` now render real analysis results in text or deterministic
+JSON with exit codes 0/1/2. Remaining before the acceptance sweep: guard
+clauses, schema-dump honesty, and the diagnostic-catalog conformance suite
+(M8). This repository is not yet a published package release.
 
 ## Requirements
 
@@ -52,20 +50,26 @@ php artisan schema:trace users.email
 ```
 
 All three commands accept `--json`, `--connection=default`, repeatable `--path`, and
-`--strict` for signature compatibility with the approved design. Commands now
-discover migration files from configured directories, or from `--path` overrides.
-After successful discovery they print any filename warnings, then
-`The analyzer is not implemented yet (M1 discovery only).` and exit with code 1.
-Invalid/unreadable discovery directories also exit 1 with an explanatory error.
-`--json` does not yet produce the future JSON contract; `--connection` and
-`--strict` do not yet perform schema analysis.
+`--strict`. They run the full static pipeline — discovery, parsing,
+normalization, reconstruction, and one command resolution — and render the
+result through a text or JSON renderer. Exit codes: `0` for resolved results
+(including complete dropped tables), `1` for invalid arguments, discovery
+failures, unresolved targets, or ambiguous identities, and `2` when a
+resolved result is incomplete and `--strict` was passed. Reduced fidelity
+never affects exit codes; errors always take precedence over strictness.
 
-The commands retain their discovery-only behavior. The complete analysis
-pipeline is available through the `MigrationAtlas\Atlas` orchestrator and its
-container bindings: `Atlas::inspect`, `Atlas::history`, and `Atlas::trace`
-run discovery, parsing, normalization, and replay, then resolve one command
-result each. The commands themselves are wired to these results in the CLI
-milestone.
+Text output shows the status banner with reasons split by origin
+(direct/global/conditional/conflict), per-column provenance
+(`added by`/`changed by`/`renamed from`/`dropped by` with file:line),
+reduced-fidelity footnotes (`†`), conditional event markers (`‡`), a
+`DROPPED` banner with last-known state, clearly separated lineage sections
+for recreated tables, and candidate/last-known definition labels for
+uncertain traces. JSON output is the deterministic envelope from the
+specification: stable key order, no timestamps, always-present
+`global_uncertainty` with ledger sources, reconciled counters, existence
+and possible names, fidelity, and per-command data payloads. Malformed
+UTF-8 payloads (binary defaults) are visibly substituted rather than
+silently transcoded.
 
 ## Migration discovery
 
@@ -334,7 +338,7 @@ imports, connection routing, fluent/arrow callbacks, source locations, size and
 syntax failures, typed normalization, skip markers, and migration non-execution.
 
 Current implementation, verification results, and limitations are recorded in
-[the M6 handoff](M6-HANDOFF.md). The [M5 handoff](M5-HANDOFF.md), [M4 handoff](M4-HANDOFF.md), [M3 handoff](M3-HANDOFF.md), [M2 handoff](M2-HANDOFF.md), [M1 handoff](M1-HANDOFF.md), and
+[the M7 handoff](M7-HANDOFF.md). The [M6 handoff](M6-HANDOFF.md), [M5 handoff](M5-HANDOFF.md), [M4 handoff](M4-HANDOFF.md), [M3 handoff](M3-HANDOFF.md), [M2 handoff](M2-HANDOFF.md), [M1 handoff](M1-HANDOFF.md), and
 [M0 verification handoff](M0-HANDOFF.md) preserve the earlier checkpoints.
 
 ## Design and scope
@@ -343,9 +347,10 @@ The approved design lives in [the MVP specification](docs/mvp-spec.md),
 [architecture](docs/architecture.md), and [implementation plan](docs/implementation-plan.md).
 The specification documents preserve the approved design baseline and may still
 contain their original pre-implementation approval wording. Current progress is
-recorded in this README and the milestone handoffs. M6 supplies history
-timelines, column tracing, and the three command result DTOs; only the CLI
-renderers and exit-code semantics remain before the acceptance sweep.
+recorded in this README and the milestone handoffs. M7 supplies the working
+CLI with both renderers and the exit-code contract; guard clauses, schema-dump
+honesty, and the diagnostic-catalog conformance suite remain for the final
+hardening milestone.
 
 ## License
 

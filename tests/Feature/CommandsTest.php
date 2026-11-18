@@ -31,26 +31,6 @@ it('registers the command arguments and shared options', function (string $name,
     ['schema:trace', 'column'],
 ]);
 
-it('reports the unavailable analyzer without executing migrations or connecting to a database', function (string $name, string $argument, string $target) {
-    $path = dirname(__DIR__).'/Fixtures/migrations';
-
-    config()->set('migration-atlas.paths', [$path]);
-
-    $this->artisan($name, [
-        $argument => $target,
-        '--json' => true,
-        '--strict' => true,
-        '--connection' => 'archive',
-        '--path' => [$path],
-    ])
-        ->expectsOutput('The analyzer is not implemented yet (M1 discovery only).')
-        ->assertExitCode(1);
-})->with([
-    ['schema:inspect', 'table', 'users'],
-    ['schema:history', 'table', 'users'],
-    ['schema:trace', 'column', 'users.email'],
-]);
-
 it('passes configured or overriding paths to discovery for every command', function (string $name, string $argument, string $target, bool $override) {
     config()->set('migration-atlas.paths', ['database/migrations', 'configured']);
     $absolute = dirname(__DIR__).'/Fixtures/migrations';
@@ -68,7 +48,7 @@ it('passes configured or overriding paths to discovery for every command', funct
     }
 
     $this->artisan($name, $arguments)
-        ->expectsOutput('The analyzer is not implemented yet (M1 discovery only).')
+        ->expectsOutputToContain('No migration files were found in the configured paths.')
         ->assertExitCode(1);
 })->with([
     ['schema:inspect', 'table', 'users'],
@@ -103,18 +83,24 @@ it('does not consult invalid configured paths when overrides are provided', func
     config()->set('migration-atlas.paths', 'not-an-array');
 
     $this->artisan('schema:inspect', ['table' => 'users', '--path' => [dirname(__DIR__).'/Fixtures/migrations']])
-        ->expectsOutput('The analyzer is not implemented yet (M1 discovery only).')
+        ->expectsOutputToContain('No analyzed migration resolves')
         ->assertExitCode(1);
 });
 
-it('surfaces discovery warnings while clearly reporting the unfinished analyzer', function () {
+it('surfaces discovery warnings in the no-migrations error envelope', function () {
     $diagnostic = new Diagnostic(DiagnosticCode::NonStandardFilename, DiagnosticSeverity::Warning, 'Nonstandard migration name.', '/legacy_migration.php');
     $finder = Mockery::mock(MigrationFinder::class);
     $finder->shouldReceive('find')->once()->andReturn(new MigrationList([], new DiagnosticCollection([$diagnostic])));
     $this->app->instance(MigrationFinder::class, $finder);
 
     $this->artisan('schema:inspect', ['table' => 'users'])
-        ->expectsOutput('NON_STANDARD_FILENAME: Nonstandard migration name.')
-        ->expectsOutput('The analyzer is not implemented yet (M1 discovery only).')
+        ->expectsOutput('⚠ NON_STANDARD_FILENAME: Nonstandard migration name. (legacy_migration.php)')
+        ->expectsOutputToContain('No migration files were found in the configured paths.')
         ->assertExitCode(1);
 });
+
+it('rejects malformed trace targets', function (string $target) {
+    $this->artisan('schema:trace', ['column' => $target])
+        ->expectsOutput('A column identity in table.column notation is required, for example users.email.')
+        ->assertExitCode(1);
+})->with(['users', '.email', 'users.', 'a.b.c', '']);

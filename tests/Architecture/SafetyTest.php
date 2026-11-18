@@ -74,6 +74,34 @@ arch('history events remain framework and pipeline independent')
         'MigrationAtlas\Normalization',
     ]);
 
+arch('renderers only consume result DTOs')
+    ->expect('MigrationAtlas\Cli\Render')
+    ->not->toUse([
+        'MigrationAtlas\Atlas',
+        'MigrationAtlas\Reconstruction\FunctionalSchemaReconstructor',
+        'MigrationAtlas\Reconstruction\SchemaReconstructor',
+        'MigrationAtlas\Normalization',
+        'MigrationAtlas\Parsing',
+        'MigrationAtlas\Discovery',
+        'Illuminate\Support\Facades\DB',
+        'Illuminate\Support\Facades\Schema',
+        'PDO',
+    ]);
+
+arch('commands orchestrate instead of analyzing')
+    ->expect('MigrationAtlas\Cli')
+    ->not->toUse([
+        'MigrationAtlas\Normalization',
+        'MigrationAtlas\Parsing',
+        'MigrationAtlas\Reconstruction\FunctionalSchemaReconstructor',
+        'MigrationAtlas\Reconstruction\SchemaReconstructor',
+        'MigrationAtlas\History',
+        'Illuminate\Database',
+        'Illuminate\Support\Facades\DB',
+        'Illuminate\Support\Facades\Schema',
+        'PDO',
+    ])->ignoring('MigrationAtlas\Cli\Render');
+
 arch('schema operations do not depend on framework or pipeline services')
     ->expect('MigrationAtlas\Operations')
     ->not->toUse([
